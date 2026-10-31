@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>investiGO · Simulador de datos para tesis correlacionales</title>
+<script>try{var th=localStorage.getItem("investigo-tema");if(th==="light"||th==="dark")document.documentElement.setAttribute("data-theme",th);}catch(e){}</script>
+<link rel="icon" id="favicon" href="">
+<style>
+  :root{
+    --yellow:#ffcb05; --yellow-d:#e5b100; --red:#e3350d; --blue:#2a5bb8; --sky:#9cc9ec; --navy:#0b1f4b; --ok:#1d7a46;
+  }
+  [data-theme="dark"]{
+    color-scheme:dark;
+    --bg:#071430; --surface:#0f2148; --surface2:#142b5c; --text:#e8eefc; --muted:#9fb1d6; --head:#ffffff; --accent:#ffcb05;
+    --line:#26407a; --input:#0b1a3c; --input-line:#2f4c8c; --th:#1c3a7a; --stripe:#122650;
+    --help-bg:#2b2608; --help-line:#5c4f12; --help-text:#f1e3a6; --help-sum:#ffd94a;
+    --explain:#16316b; --err-bg:#3d1408; --err-line:#7a2a14; --err-text:#ffb8a3; --ok-bg:#0d3320; --ok-line:#1f6b42; --ok-text:#8fe0b0;
+    --top:#0a1938; --pill:#1c3a7a; --pill-text:#e8eefc; --btn-l:#142b5c; --stepper:#081736; --badge:#0f2a62; --badge-line:#3a5592;
+    --shadow:0 10px 30px rgba(0,0,0,.35); --meter-mid:#2c3e66; --logo-bg:#ffffff;
+  }
+  [data-theme="light"]{
+    color-scheme:light;
+    --bg:#f4f7fd; --surface:#ffffff; --surface2:#fbfcff; --text:#14213d; --muted:#5d6b86; --head:#0b1f4b; --accent:#2a5bb8;
+    --line:#d8e0ef; --input:#ffffff; --input-line:#c9d4ea; --th:#0b1f4b; --stripe:#f8faff;
+    --help-bg:#fff6cc; --help-line:#f3dd7a; --help-text:#4d3d00; --help-sum:#6b5200;
+    --explain:#dfe9fb; --err-bg:#fde7e1; --err-line:#f4b9a9; --err-text:#8f2208; --ok-bg:#e3f5ea; --ok-line:#b5e0c4; --ok-text:#1d7a46;
+    --top:#ffffff; --pill:#dfe9fb; --pill-text:#0b1f4b; --btn-l:#ffffff; --stepper:#0b1f4b; --badge:#0f2a62; --badge-line:#3a5592;
+    --shadow:0 10px 30px rgba(11,31,75,.07); --meter-mid:#f2f2f2; --logo-bg:transparent;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  section[id],#wizard{scroll-margin-top:78px}
+  body{margin:0;background:var(--bg);color:var(--text);font:15.5px/1.55 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;transition:background .25s,color .25s}
+  a{color:var(--accent)}
+  .topbar{position:sticky;top:0;z-index:20;background:var(--top);border-bottom:3px solid var(--yellow);box-shadow:0 2px 10px rgba(0,0,0,.15)}
+  .topbar .in{max-width:1120px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:8px 18px;gap:12px}
+  .topbar .logo{background:var(--logo-bg);border-radius:10px;padding:3px 8px;display:inline-block}
+  .topbar img{height:44px;display:block}
+  .topbar nav{display:flex;gap:6px;align-items:center}
+  .topbar nav a{color:var(--head);text-decoration:none;font-weight:600;font-size:14px;padding:7px 12px;border-radius:999px}
+  .topbar nav a:hover{background:var(--pill)}
+  .topbar nav a.cta{background:var(--yellow);color:var(--navy)}
+  .theme-btn{width:40px;height:40px;padding:0;justify-content:center;border-radius:50%;background:var(--pill);color:var(--pill-text);font-size:18px;border:2px solid var(--line)}
+  .theme-btn:hover{border-color:var(--yellow)}
+  @media (max-width:600px){.topbar nav a:not(.cta){display:none}.topbar img{height:34px}}
+  button,.btn{font:inherit;font-size:15px;font-weight:700;border:2px solid transparent;border-radius:999px;padding:10px 20px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px;line-height:1.2}
+  .btn-y{background:var(--yellow);color:var(--navy);border-color:var(--yellow)} .btn-y:hover{background:var(--yellow-d);border-color:var(--yellow-d)}
+  .btn-b{background:var(--blue);color:#fff;border-color:var(--blue)} .btn-b:hover{background:#214a97}
+  .btn-l{background:var(--btn-l);color:var(--head);border-color:var(--line)} .btn-l:hover{border-color:var(--yellow)}
+  .btn-r{background:transparent;color:var(--red);border-color:var(--err-line)} .btn-r:hover{background:var(--err-bg)}
+  .btn-s{font-size:13px;padding:5px 12px;font-weight:600}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .eyebrow{display:inline-block;background:var(--yellow);color:var(--navy);font-weight:800;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;padding:4px 12px;border-radius:999px}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 18px}
+  section.block{padding:30px 0}
+  .page-title{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:6px 0 14px}
+  .page-title h1{margin:0;font-size:clamp(22px,3vw,30px);color:var(--head)}
+  .page-title h1 span{color:var(--yellow)}
+  .notice{background:var(--help-bg);border:1px solid var(--help-line);color:var(--help-text);border-radius:12px;padding:10px 14px;font-size:13.5px;margin:0 0 16px}
+  .wizard{background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
+  .stepper{display:flex;background:var(--stepper);padding:16px 14px;gap:6px;overflow-x:auto}
+  .stepper button{flex:1;min-width:110px;background:transparent;border:0;color:#9fb1d6;display:flex;flex-direction:column;align-items:center;gap:6px;padding:4px;border-radius:12px;font-size:13px;font-weight:600}
+  .stepper button .b{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;border:3px solid var(--badge-line);background:var(--badge);color:#9fb1d6;font-weight:800;font-size:15px;transition:.2s}
+  .stepper button.done .b{background:var(--blue);border-color:var(--sky);color:#fff}
+  .stepper button.active{color:#fff}
+  .stepper button.active .b{background:var(--yellow);border-color:#fff;color:var(--navy);transform:scale(1.08)}
+  .stepper button:disabled{opacity:.5}
+  .progress{height:5px;background:var(--badge)}.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--yellow),#ffe36b);transition:width .3s}
+  .step{display:none;padding:26px 26px 22px}
+  .step.show{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .step h2{margin:0 0 4px;color:var(--head);font-size:22px}
+  .step .intro{color:var(--muted);margin:0 0 18px}
+  .navrow{display:flex;justify-content:space-between;gap:10px;margin-top:22px;padding-top:18px;border-top:1px dashed var(--line);flex-wrap:wrap}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px 16px}
+  label.f{display:flex;flex-direction:column;font-size:13px;font-weight:600;color:var(--head);gap:5px}
+  label.f small{font-weight:400;color:var(--muted);font-size:12px}
+  input,select,textarea{font:inherit;font-size:15px;padding:9px 11px;border:1.5px solid var(--input-line);border-radius:10px;background:var(--input);color:var(--text);min-width:0;width:100%}
+  input::placeholder,textarea::placeholder{color:var(--muted);opacity:.8}
+  input:focus,select:focus,textarea:focus{outline:3px solid rgba(255,203,5,.45);border-color:var(--yellow-d)}
+  input[type=checkbox]{width:18px;height:18px;accent-color:var(--yellow-d);flex:none}
+  input:disabled{opacity:.5}
+  label.chk{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--head);cursor:pointer}
+  .help{background:var(--help-bg);border:1px solid var(--help-line);border-radius:12px;margin:14px 0;font-size:14px}
+  .help summary{cursor:pointer;padding:10px 14px;font-weight:700;color:var(--help-sum);list-style:none;display:flex;align-items:center;gap:8px}
+  .help summary::-webkit-details-marker{display:none}
+  .help summary::before{content:"?";width:22px;height:22px;border-radius:50%;background:var(--yellow);color:var(--navy);display:grid;place-items:center;font-weight:900;font-size:13px;flex:none}
+  .help[open] summary{border-bottom:1px solid var(--help-line)}
+  .help .body{padding:10px 16px 12px;color:var(--help-text)}
+  .help .body p{margin:0 0 8px}.help .body p:last-child{margin:0}
+  .tipline{font-size:13px;color:var(--muted);margin:6px 0 0}
+  .labels{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:8px}
+  .labels label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:var(--accent)}
+  .sub{font-size:15px;color:var(--head);margin:22px 0 6px}
+  .dim{border:1.5px solid var(--line);border-left:6px solid var(--blue);border-radius:12px;padding:14px;margin-top:12px;background:var(--surface2)}
+  .dim-head{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center}
+  .dim-head .n{background:var(--blue);color:#fff;font-weight:800;font-size:13px;border-radius:8px;padding:4px 9px}
+  .dim-opts{display:flex;gap:16px;align-items:end;flex-wrap:wrap;margin-top:10px}
+  .dim-opts label.f{width:150px}
+  .ind{display:grid;grid-template-columns:34px 1fr 110px;gap:8px;align-items:center;margin-top:8px}
+  .ind .n{color:var(--accent);font-size:12px;font-weight:800;text-align:right}
+  .counter{display:inline-block;background:var(--navy);color:var(--yellow);font-weight:800;font-size:12.5px;border-radius:999px;padding:3px 11px;margin-left:8px;vertical-align:middle;border:1px solid var(--line)}
+  table{border-collapse:collapse;font-size:14px}
+  th,td{border:1px solid var(--line);padding:6px 10px;text-align:center;white-space:nowrap}
+  th{background:var(--th);color:#fff;font-weight:600}
+  td.l,th.l{text-align:left}
+  tr:nth-child(even) td{background:var(--stripe)}
+  table.scale input{width:84px;text-align:center;padding:6px}
+  table.scale input.lab{width:170px;text-align:left}
+  table.scale td{background:transparent!important}
+  .scroll{overflow-x:auto;max-width:100%}
+  .errors{background:var(--err-bg);border:1px solid var(--err-line);color:var(--err-text);padding:12px 16px;border-radius:12px;margin-top:14px;font-size:14px}
+  .errors ul{margin:4px 0 0;padding-left:20px}
+  .visual{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+  .meter{flex:1;min-width:220px;height:14px;border-radius:999px;background:linear-gradient(90deg,#e3350d 0%,var(--meter-mid) 50%,#2a5bb8 100%);position:relative}
+  .meter i{position:absolute;top:-6px;width:6px;height:26px;border-radius:3px;background:var(--yellow);box-shadow:0 0 0 2px var(--navy)}
+  .meter-l{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:4px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:16px 0}
+  .rc{border-radius:16px;padding:16px 18px;border:1px solid var(--line);background:var(--surface2);position:relative;overflow:hidden}
+  .rc::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--blue)}
+  .rc.y::before{background:var(--yellow)} .rc.r::before{background:var(--red)} .rc.g::before{background:#2fa463}
+  .rc .k{font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .rc .v{font-size:30px;font-weight:800;color:var(--head);line-height:1.15;margin:4px 0}
+  .rc .t{font-size:14px;color:var(--text);margin:0}
+  .explain{background:var(--explain);border-radius:14px;padding:16px 18px;margin:16px 0;color:var(--text)}
+  .explain h3{margin:0 0 6px;font-size:16px;color:var(--head)}
+  .explain p{margin:0 0 6px}.explain p:last-child{margin:0}
+  .ok{background:var(--ok-bg);border:1px solid var(--ok-line);color:var(--ok-text);padding:12px 16px;border-radius:12px;font-weight:600}
+  .tbl{margin-top:22px}
+  .tbl h3{font-size:15.5px;color:var(--head);margin:0 0 8px}
+  .tbl .note{color:var(--muted);font-size:13px;margin:6px 0 0}
+  .dl{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--navy);color:#fff;border-radius:16px;padding:16px 18px;margin:18px 0;border:1px solid var(--line)}
+  .dl p{margin:0;color:#c9d6ef;font-size:14px;flex:1;min-width:220px}
+  .contact{background:linear-gradient(135deg,#0b1f4b 0%,#13306b 100%);color:#fff;border-radius:22px;padding:32px;display:grid;grid-template-columns:.9fr 1.1fr;gap:30px;border:4px solid var(--yellow)}
+  @media (max-width:860px){.contact{grid-template-columns:1fr;padding:22px}}
+  .contact h2{margin:6px 0 10px;font-size:28px}
+  .contact p,.contact ul{color:#cfdbf3}
+  .contact ul{padding-left:18px;margin:0}
+  .contact form{background:var(--surface);color:var(--text);border-radius:16px;padding:20px;border:1px solid var(--line)}
+  .contact .grid{grid-template-columns:1fr 1fr}
+  @media (max-width:520px){.contact .grid{grid-template-columns:1fr}}
+  .contact .full{grid-column:1/-1}
+  .formmsg{margin-top:12px;font-size:14px;border-radius:10px;padding:10px 14px;display:none}
+  .formmsg.ok{display:block}.formmsg.err{display:block;background:var(--err-bg);color:var(--err-text);border:1px solid var(--err-line)}
+  footer{background:#050f24;color:#9fb1d6;margin-top:30px;padding:24px 18px;text-align:center;font-size:13.5px}
+  footer img{height:36px;background:#fff;border-radius:10px;padding:5px 9px;margin-bottom:8px}
+  footer p{margin:4px 0}
+</style>
+</head>
+<body>
+
+<header class="topbar"><div class="in">
+  <a href="#simulador" class="logo" aria-label="investiGO, inicio"><img data-logo src="" alt="investiGO — Investiga, evoluciona, ¡triunfa!"></a>
+  <nav>
+    <a href="#simulador">Simulador</a>
+    <a href="#contacto" class="cta">Contáctanos</a>
+    <button class="theme-btn" id="theme-btn" type="button" aria-label="Cambiar a modo claro" title="Cambiar modo claro / oscuro">☀️</button>
+  </nav>
+</div></header>
+
+
+
+
+
+<section class="block" id="simulador"><div class="wrap">
+  <div class="page-title"><h1>Simulador de datos para tesis <span>correlacionales</span></h1></div>
+  <div class="notice"><strong>Datos ficticios:</strong> úsalos para practicar tu plan de análisis, no como resultados de tu investigación.</div>
+  <div class="wizard" id="wizard">
+    <div class="stepper" id="stepper"></div>
+    <div class="progress"><i id="progress"></i></div>
+    <div class="step" data-step="1" id="step-1"></div>
+    <div class="step" data-step="2" id="step-2"></div>
+    <div class="step" data-step="3" id="step-3"></div>
+    <div class="step" data-step="4"><div id="step-4"></div>
+      <div id="errors"></div>
+      <div class="navrow">
+        <button class="btn-l" data-nav="prev">← Anterior</button>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn-l btn-s" data-act="export-config" title="Guarda tu configuración en un archivo">Guardar configuración</button>
+          <button class="btn-l btn-s" data-act="import-config">Cargar configuración</button>
+          <button class="btn-y" data-act="generate">Generar resultados ✓</button>
+        </div>
+      </div>
+      <input type="file" id="cfg-file" accept=".json,application/json" hidden>
+    </div>
+    <div class="step" data-step="5" id="step-5"></div>
+  </div>
+</div></section>
+
+
+
+<section class="block" id="contacto" style="padding-top:10px"><div class="wrap">
+  <div class="contact">
+    <div>
+      <span class="eyebrow">Asesoría personalizada</span>
+      <h2>¿Necesitas ayuda con tu tesis?</h2>
+      <p>En investiGO te acompañamos para que avances con seguridad. Déjanos tus datos y te contactamos. Es opcional y sin compromiso.</p>
+      <ul>
+        <li>Matriz de consistencia y operacionalización</li>
+        <li>Diseño y validación de instrumentos</li>
+        <li>Procesamiento en SPSS e interpretación de resultados</li>
+        <li>Preparación para la sustentación</li>
+      </ul>
+    </div>
+    <form id="contact-form" novalidate>
+      <div class="grid">
+        <label class="f">Nombre completo *<input name="nombre" required autocomplete="name"></label>
+        <label class="f">Correo electrónico *<input name="correo" type="email" required autocomplete="email"></label>
+        <label class="f">WhatsApp / celular<input name="celular" type="tel" autocomplete="tel" placeholder="+51 9…"></label>
+        <label class="f">Universidad<input name="universidad"></label>
+        <label class="f">Carrera / programa<input name="carrera"></label>
+        <label class="f">¿En qué etapa estás?
+          <select name="etapa"><option value="">Selecciona…</option><option>Proyecto de tesis</option><option>Elaboración del instrumento</option><option>Recolección de datos</option><option>Análisis de resultados</option><option>Sustentación</option><option>Otro</option></select>
+        </label>
+        <label class="f full">Mensaje<textarea name="mensaje" rows="3" placeholder="Cuéntanos brevemente tu tema o en qué necesitas apoyo"></textarea></label>
+        <label class="chk full"><input type="checkbox" name="incluir" checked> Incluir el modelo que armé en el simulador (variables y dimensiones)</label>
+        <label class="chk full"><input type="checkbox" name="acepto" required> Acepto que investiGO use estos datos para contactarme *</label>
+        <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
+      </div>
+      <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn-y" type="submit" id="contact-btn">Enviar mis datos</button>
+        <span class="tipline">Para enviar necesitas conexión a internet.</span>
+      </div>
+      <div class="formmsg" id="contact-msg"></div>
+    </form>
+  </div>
+</div></section>
+
+<footer>
+  <img data-logo src="" alt="investiGO">
+  <p><strong style="color:#fff">investiGO</strong> · Investiga, evoluciona, ¡triunfa!</p>
+  <p>Contacto: <a href="mailto:investigo.tesis@gmail.com" style="color:var(--yellow)">investigo.tesis@gmail.com</a></p>
+  <p style="margin-top:10px;font-size:12px">Los datos del simulador son ficticios y se generan en tu navegador; no se guardan en ningún servidor.</p>
+</footer>
+
+<script>
+"use strict";
+const LOGO_SRC="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAoAAAACmCAMAAAB9ec4TAAABgFBMVEUYXncbFRwkWqLN5vCTo68YWJo1WnVbd5wZGnxbcI+boaJxkqljk8ms0+kmT20gNFwbOJclUIhMbIRXXl0kTW5aa3Z1ipbcuB4AAP99gFeiIRrYKCFGZXqPuN3w5tFeEw0mUonj1rAA///jt65KaYWspn8ALYQA/wC2yrYAf/9/AH9AY32w19f//wAAHz9/AP9/f/9zh5abf5v/AP///38AfwAAqqpVAABVAKpVVQB/v3+qf3+Df3//AAD/f3/Av7/CwL8AAAD6ygscSosHIk0GM3USSXKnyNoDGkYMTaEdS4r+/v4dSoqx0+UoU4ocSYgdSokdSokdSokhTYz+0AVQZ3CUt88ZSIoCKG7ZJByszeEyWHuLiE8FOYkjSIrVsyTFqi1pdGZxlrKHqsUZUHi5ozTkvBpOdpZze1sUPXysnDtEWnc2ZopoiqkyR21NZ4suVnUCEjwhSYlZhaj///4YSn0ZVIwnVHaakkajlkEaSm/kJhydwdclNlkWFRR4pc9LG57qAAAAgHRSTlMK//z//w1l/wMiE////9f/Cl1V+qsaIvUB8P//Uv8J/6AKAQiLB/8BDQICjQwBBAICQwwBAgIDAwMDBAb/AQL//wD+/f///f///9H/r//6Lo9Pb/v98/8V////+e//E/Dv8f///O/z//II8fr///7/kP8u/wMSEK7u7NL///////JzCx0AAD/NSURBVHja7Z2HW9vI1vANwdTQW7Ipm91b396+3okBe31lNTfWdgy2acb0ThaSf/07Z4o0kmZkGUiw72We5+4lYFuy9NPp50xsSVjNC8vW0glcac20Ti9fLT1kxS6q1WbxslmNN2MP+6Tn9Ve7Ys5PU0WLwecszSrGHvDZVTOdTmuaaZq2bcEyjLhhFGMXF81qcSo2HOveixKbKlYvikXDqA4/I/KdADRsH31UENrF+3/2hUY/JEsW/TyCJGXSJkwWu+IyxKtFXAYuy7Jt04SzTKcTZvMZke8C4IUlw49Kwfn7fvaIJv9ITiNZ9pN982q1WKXAAXEOcs5J4n90beoZke8BoGEmVCubnr63FFB/qvvx3xHA2AWVcZw4E4lzkNN1PRt8/J4l4PcA0NBCIbGnvh2A31YCxmPFSyDu1CVOQA6Ay7Y7u2cAvweARvobQRIFQOvbfK8pSyAunbjvegbwOwBopAVBkN+t3Ozt3VRqZdEVsXoOQOP+0D0D+H0BjLn6V9/d2P7I1vZWzeEyqxUfAmBWd5fgEX9bABPZ+2OX1cv5cvYZwO8CYNx2pd/6R89an30gJjb/3O11d23QtdfqKgkID0m5nJ+tVa739rY21rc/bui9A+D70RGIroorNjJ63isAOndq92NgVbIPEoEcwI+5wCfntvP0j8aTAQiSGCRdvrZbqVwT5jznt9EbEnB+ZGHmw9XEamBNXM3MLMzPdz+AZgh/QCD/q/EgCRgE8OMik4Bx7+kUm98SQMYcQPe6srex7kAnOb+tHrABF0Zmjq9W1WvianBk/qcuB9DRvx+lK88d4fskziz63rIMwHVdRralmUbzMQFE5Ahz+drrys3WBpV0ObI+hq3HAvCfzs/nR8+/gUI8H3k755V8m5tlWJteCK8G5xd6AcDsRth9SGQ/FB8A4IbkXm8wAE+92OiJtGkVHw3A2vUNmnSulGuD3SMCeD4yEovNDA7OvB0cnB6cnnkbGxlZeDQO388PurKvvL9zdlBvNApkNcbqZzv7ugPixPHb+e4HsKa4D9uMk7RxfwD1LRmAzLysitRo9Jea/eAUMQNwIxdB2EnXHnn/PXPB5wsj04PHVxPlQ0EWlSeujgdBHr1/DOk3yIWfvn82VkgmM5lM0lmZTClZaNR39jcdMbjQ7QDeqG4EjweePjKATLSKAF5q3OdBMWg8AoAquf5NAQQ6jmVuASpJtMuOB0ceKAjnj9nH6zv1QpKhl3EX+XcpU7ptHHAG5wZHuxvALdWN0B/ghTAxlN1TA5i+dF497I1bP0wVPxjAm3sCuDB49Xm1zfoMDD7A9RgkB1hZRfpKjD2QeAP1+gGs+kCjcFuiGJZKycbZPkPw7XkvAriVfYAK5gDe5FQSJpGe8vvMYh7CNp4MwOv7AHg+Q2TTpmOZ1etjDVxfx+pomJUBG/rnz8cz9+PhfIbit3lG6QNBV6jvDB1OTi4vL6dSKfjv8uRh+eigwUVjYYwheDzSxQBWFPehxuVR8QEAXislTCIdV/NHCrOnp54GwErnAJ7PML9gZbW8Uwc5lPQvNMwohGiYzdwjQrJwTN8M+FH6GjuHBLzAWr5rHRQYg1/3CfafB8+7FkBFFIa7CgnzPgAW02q6r30AWqp48f1qYr8/gA5+q/pZI8ieAOFZmfsGM6P3En+rOwVq9hV2Jgl8y8FFISzXkxTBMb1LhaCTCb4JDQPeL2MWBiALcWsxX+A4/7ocRPCy6wGcH2H4be40qGGGgMAPEBYh8ZFk0vFTwTDb4QiOdBIhmR8kb9pvUPtuoJw6EeCTcJhKnUzuFMirkwfU/Hz7T10G4DQvRJDdq92HVSPwNN9uWwCdikSMGd7k/YUEnVugDwZwtxMA/88I04zlg1vmkyaTjYOj8qFjmd0dlnfALiuVqOq8PWBi8B+ix6iZ+j0rUfwOT7zIHU5KJeHJ8hFBMFOgpuDgH7qs/8apz9xSJ+IS00sPkYC7arYpgFXOn04d5o3dspfB6e8OYK0DAEepX7qqc4WXHBgqL6N4oorQtdEmy0NMQGaSdaoVJ6IGSOZJ7EWn4g/x85J2MnYoA5AgyKTgGVXDo90FoBP8yFYWPUnR9ZrrjlbvB6CmjnLXBACLzjkwZZ3Lbd/k9SeVgLPRAWTiz7G3BnYmU30ncsPs5CQ1uTNAGMwkmRSMRsT8Z/QjdlDCZgpHQJVvgfy7W5avVN/dAYH+a7nrCIzFbFfWtCobNFGKQqhSfnDRHjcw82rr0oS+x6bjAM+61Si5jxuv804xzsV3BzAfFcBzmhPbHEMpUyoVQBCdpBSy6K5FIFw+BP+0RJwIEpW5imAIzhD+Dii4y33+A6SWx1KHQ6llFYIn5UaGqeHN1eOFbipI9bifev719d4WVETP6g8ywToBMGbJCxJzuS393g/AdwPwnKpf4hiUMo2du1RKjcHd0XKK4NCHvkEJ3jBGiGgfHxlE/sp1hKjROlEcQSUBcfUtj4HcLSWJ+3O10EUAGsHazEAxsXZPAjV1QSAHEAIwrhWak9ug97AAvheAo8wxSBL5snN3kgqBwHVUWycnd8Qwy9yekRBdG0PwLeGPCLG64hip5VSbY7eIJUgMwbnRLgbwETs3mG2X3w4AyOtRbaFyzxevzvGCmfs0RX0nAEfmiPXXQH1aGrsLR0BgZQj9ksmDEorNsfJKOySI/VcmOn5oOaUKurRbJ5NETJN4zNxPf0sASgoCt5mFaRfVFdncCdIuvyeAxALOsfMzw2XvAvK3sl9A/hqHlIkgGSpWUinKVGG/DYGMPzhK6Yh/2OFh5wSmlokOJwQen/9tA8jrUW1NWRF7k33Awe8FILK3vbG1d/06z/yfcACBP3RMiYM5RDkD4XbnJ6N1F2SSk3lAHOcdVMNKAufJYUjywzH/Uq1Wqh3jkkeBEniGwA92C4CnUdp37OFmdWpq6pWzOgJQ31AC6Lo/6/6afZ6F0WLfA8DF9Q1oRs3ny54TCwWQ8neGtzTZYnc7tZwPxIOP7kK80xYJyYyFGGZgZsJhUMuXWidSulKpo5YkDXJ3KJGBSHxpBx2ft90iAdNOw4QaQJwo5CyTrg8fHNfk0jalK60sCNzwHSy7p4yCWw8oRvAE16EYf3t7ezFQ8FN5XcuX5V8+DMBREn45IN7H3UmY3AlTlid3xBehroG0VpXk3+rjXv58RyAZl8Avj5Yl54IysLSPBM53F4Dlra2byuvdXZAC+XKZdvC26WR0EnRWQg99ZbAgcMv32RWliDQfUhGdr9Xw++TzLfxKtDF5S26Ndgrg74j8IyptwLnRndtl8JYBRiAE6H4n8XM+Ey8b7b+ToBbvTAU7h7vFiPTxn7sCwCoDsCW06mwvQv8uhgPL4ZqZO4l2Gw0eBHDP+4KaMg19zxhkSFvmnqrgIrh0NYA/DTryr85hSE0OyRBMKcBIeQ0zeaKWyNl9YmX2LbdP/bZ/ClLLqM0b5Gj/qRsA5G5o2WuPY+gul8tHck6G283guGkDYGtdVbF/37k0IQBuRQewX9kMeE74I/bfgSNpUpOtKCLvLgAk4ZiEiAOG2VsM84ADnKl7wn/g7ER3g70v7DtMsmDMxHz3Atj+5gjy6UJrMwfjOqeoR1XaiI4HUvzmANa85gK3eWGGpmUV/6QKAIJiXEH/V+BPrvRSy0eHKY/EGyIeQ6p15HVOk8Qw8xXsLRADMANRHhGjVJhlmQr44S0vqyetEjkaKOE/dDuAtXbTBUiSwjPeSLYqOUU9qqpesPLQ0THq2TB+G5Ar+yy+A+a3EvCMYniHPCjGzdX9W9S/yiifw+QkVZYOGHcBJ5USeIsEznmyZOeYaDlCXiajy7uAHeCPGZ6MZZKlBnYGzPQ6gGAG/uytZs6SUUTQII294DW9LWFSA9D1QO47SBoKcfoDYxHkAPLKRHPaxpHBxSh6aZDkP5j/IZV7aA6C0kyB9GF/bx15kxieQMryABZL66RGVSxBwGKFwngyIzogkEJJheX6Uqk23giYgRmqhOf+3D0A6rLILAewXCNrl67XlUplt+waadQH0WHGCrSB4/SB9fXFxW3Bw3wdBmB+W92Jcu+mpOGiZab9kaQQALOa0UHzyQhXjAUUamWJNZZaPgRRBPC1HP3LBJPcNz2pJ1l05FAA8HyOGprIufi+Q3mpV9/J4V1fn1CLo5TOhyUicLtABLYBcDdkcJE7Nsb0pTJyzgSisurtu64BuPFR7YE8ZEh9tWjglMoPZEY/iLZLQw7gdcfG5jl6pjsYGSZ0tQ4VTRkHraB4TB0eyl57UCLx4VVvWQIKwDL2lwDJoteb8it7FLaHRzsHhYGhndbk8gl1WE7GWioCh4DqOvoh/9g9AG6HADgb/NN6yymV0RRFVzmuSmtq3Z69Ubo+92oEiE2d0om8hDrYDKIaG2aNT1V5dmSv44Sz45kepUIDzSlZ+q0VhCJ1MuRmyM59AhAF7RjQPFZWFBkuH7WgumvgHRQjsmaUQn1oGRFMTar9Yswsd4MIjAigRE26IpBtLyIBkNez5NXu9euPj+aBvIpXLdO71wn4FLYRjwJgB32no58ZF/XUfQLPEv7QzcgcrPhrBFAA6gjUHTguaswnjwagP7NUYnMRAMMM9Jxg1VZK+UikjrgIPO8aANdDAJT8MccHrKnna+X2sip+8+o3rXPr0uyoJfjSsBWz1nHGwoUaQJqU6QDAQRYaDvNMOyGT8lcnNSpiKoQLwNJQX2toWVlSczgA/XZQij0wlm/NtvJDYwMoC7FuOqD+J4/c6DeWZnWBCGwD4Ouw4VmVtgDyV+QXFSNnyusfHycHUrQ+hMYrgcEY3TgnYHNSMR39aEQAfgUBspNqL+08reKKF2E9AuXPW46AscYyEYCpZbX4O8B2z8LYbJ+zvvTlkUHsHPG+UQDQFYFX510CYFYGYEWVvxKLSiMAuC4HMBvsxHPr8DvIgVxYWpuZ0DDvyDbkADJDNTKAJDSXETLAMrQwT0HGExy2jo52jlqHd8sKBE8OoZgm85UUZM37ky0rZxgvOVEDfgiV/ZlCHrD78Ycffn3z5s2vb3744ce+LxNQgJ/JHPjSLkIrUwqLIEhKeLRLcsEyIecCKJuukau0A5AL0ICgY+5xJST50kEdvhFlHD9GmeUAljsCkAjAAqnN4/1oElV8CF7AZGtooMCmVoGGxE7NlKRMuYB5DiTBV54yOscOdHiiUPJQhgWUJYeQvjdvfuPrzW9vgMGJARCCA3dDCjshRRzhnSfXwW0AvE6Ezo7JhxcUONo0cNPp2EFZv/B1x2WoTekud8panuC5tDoCEC3AHY8AbB0Fa0MhJDfUKPmG9jWAhpSkGitTkPBHXJB9sA7r8rgeitQdZGwC8fvtt1+F9dubNz/0fcmDECyoAjEgeQu0JmHufXeUY0kBvEmEDbDM3bQBsKa66UTtyVxrtwzVTYXBDluwl+BFUR4UhKZiD2rZMux1ArPuYV1DpV9Lbwtg3g/gVPGyqIrK/IRyqYECsE8R420RuTZGBwNxBEv0HwWIj3hNOMxJQAYkWJ5Hyh3qWAXY5776UMy09EEoMjPW1wf4/epfv735FYTguwwNlctFYJ25IQtdUpAqmdCW24s4Qlohz/Kq/CsCWA51bOhAzLhhsy3dyCabkCvzdwh7txnL5itbXnW/uHHt2XRHEvjOixK3CEfEA2qaLZ1P+JbKpdLAsjzfgABCXI/2/UJEbmxnHxYMaiskSeNmQWyqpL4omZkRKFDGOqxNEFIF4UCHgjM8CcXUwN+XH3/4LcgfQfCHvrt3JW8Vg9f5ZkVg011Ski/xM3JO3Wh5Wz5HVBA+wYjedkvlw0BBtCwC7UyOTpiQkIrbWjpYmu2dW+mpetEr8hL8xT130x2Jt19zp38UPaEcyVQkUh1QD1SHBvIaiN9tfV+YGL65X78lretjQvnqAKmCWZHVYY1M0HYTlQvSN1koIX9vpPjhQgIBeVW0MjWJeD+1HxwVQFmQxicCg2biYlkF4JY0Ai0kSIy4pYXFVCT86ZVFdcvH+q6uPE9qqdqvAD8/8IFNyhYAi81bj1yS1xwn+eANcUr0QZLMQ3CKEkh5/M6KtDaUaOCSrw4/5SmgyQyE8QdC8Ie+WTiC4lmBw8PZwEl+XuiOrjiJRMq5rRtboVP05QC6nUfXgXLAvHowM9mlOLxVCmIqMWH8FjFB18O7jta5FAzMy6Rq3/5n6aah5qUfCywDLB30tSmxb+jOlHpYXBLqpIN4gBX0sQYhSYvacOz9PzBbU0F6qgVmZV/fryH8EQJr4IArzMCTneTT+8ECgNehAO59bCcCK8pMXPBvFalE3c4noi/TmKoK29zdRNh5IS//pgxAO0JbCNHAY0JoJFj6RPgr1dn8v+mRUZi/9n50gY+vrBMCMUKcchPAvx+N0TXI1tzcP/QDrjCFdyBYgkDmbYH1mMn3/eB1fnF57cAfv8DpDJ0o/GB2otPdAaAk0pJbzybazPDdSCgBdmPKgXdfy8ZG+1MrbXtF3fBfOVL/5fau9HRorCktetFQbpYvS2oSF66wDMHVwKk7n3RhYm2MjOGlQ4DO//A/R+fn5xf+7cMmH++XGTuBBLDTJL458fnzZ8lEfRS1LjwpVoSfwrgjJDJQAf8m0vfrD7h+FYXib2/6JiSeMK8QY0bgUzapiwDK9jPKJtpsJOKabTfBKI0SX6lLs64rtq5sQXHrLDbr6YrmO+lmYNLR47rEYRL7U/TZvUXanfVx8TofiEjGKBYZ7hmw8npXGJK8LjXr9N/Pc4l2jGtughiFK6TDrdXnJoBVC1+ZKQs+MOUodYQpNhBss6ICBmHX9+UL5uF+/EH89Q9fwND0Jw1ZTXYKq2DLTxsJDJeAAoB51T11tPRNSKZkN/pMSM8CaQQbCXJc1zf2KrIO3tZ65J1o9vTgCQkAlvfcOUowpHDXl5TmsblM+SQQgoEgXYomuKhaPf79BNtAC5cg2FZQCxeO0B+pr4Ru54BFqnfBjhPU34cgAPsEAYiB59mBgRcvBmqQFxE9ExSBA74mTjbL8uSA1mRNLHQtgIuOyCm3GWYrsRKdTFyI/JT7M7wM+9qdV/iR/7R+U9P9oeUOdkLac0oUc8ED+zYVy32k38D+ex6FPlZ7BjiejyjgDBlzcPx+UCXYVsbI0GaYh1DexHZlDBT278A6O4Mdt2CNMcE44PW2xe6nsUxJtADR3x34C10vBr70uQT+RqxAb8ksTxBjJBDGgmxODHYtgNvOvda3le6lrvCTc7uJtvJT3YGXr6xLd3bD0ZUVEcHsdUc7cQVloOMrBT4pR08qzbeJwknk4BkkB5Sl7knS9L2JU0gHN4VNBAll+5SysTrLzjUG6O5ut2yofgnLqLCaL0neCsZmqSFA51Zeowvy7u5H0dvNv/iLswb6XAJJKCZzlJLVJJ5grQ2WIXYHgK9DAQwZs/JaFaiphfV9tKls2Nv+qOQKENzNdgS3zNWpBABsBQ6Z2/JYgRgc3sce8RNJlSlqRhSAQ5hfBaWGAO6MjY3xTQQLwY1DSqq9HMg8cUAdoshur9GQg1HqDjzpkx/euK7GrMAfEAjxQYfOHyeE3vng81JffWIArVA7TU+0i8M45SRbijnL8oJAxYcwEvbaCzLn9eX13H1G/7njaJxD11RPIK8Mmy+TKRmZVsCrnGQlTpDY3WTp1Wk2uUO5cEKquGhFPe7oQIOD+wUsxhc7i11hCNMIvzga+Lcf+zz8/eUvNUE9/9hXUOTjSC5krFcArLSTKRsfpfqLQrLYiQdS2Y6A0Xr+niLQ6VThRWJO+LGWU9Bqi9kJr2cgJmlJkecZj2vMbNIXezcS5KDhvqqNAbK/29DO0dFRq1U+PDycvJtcbvEhkv1JWvSaYgPeBIdnB01A7uy+edNX8/L3lxfoiLDirB/ACCxMyrpXSBym0TUAyhwFYXLP63bSKwDgogBgmzSFEDKEKUnRQHLD1sFnY6OWr92st1PCr30fJCO5JQBI5sGMoQRUJLdA4N069SUI4BnZGolztoOcIWaTk5OSimm6IH/LxrVhvEfe9oSqvvUjBZAi5gPwL7NQI/MDXT9+GeNeiK9D3Q0Edi2AH8uRHNmKFEBBq+rrkT2Q9to6AHhgthuVcdn8XthWrO5Z5Z1/5+RxKJvvB0Kd4MKRfE+YZcxc4P0koeuZCQpgq4+hdZIKL9FPecWSAKCM9Ikf3+AiiPk1MPFDICbIFqRcaDjRN0YwlWo8eSS6HYD5KLY+bdEMALhRDmv+9Ra+qgPeMLJ0Q46vG+j2C9iK68vIwC373hYiSndFJ2T0A62Qqg/dpRTt3kR50o0wRxwAo47UOEyJVBAA8yoA303wDhAMP0sArA3gegGRQcwHt6QqmB1qc+6/dwOAs+EA6tttROB6iFoNBzDn2nM+Q3S9giNLIRlSk1RaCYTXVG3vifyG2ty89r/cPyWJVQPx/mQWhcnU++RYYHJtx6nw5PVUIYVbPs/ijjrTGP7b5BLwRAFg4a5vtkYhG5iVAPjlhWsPAoBlee88A/D4pycEcDobJuJcALNhWhQr/wIA7unqiUDSQI4nPIz4vdbFWtObbeUBfGEeMaSTfb2omIu0G+S15Y1Es0eIR2Hmr6hrqijRA9eAJhZGGICbFMC+iLMjT1LERkvV2QDJUACTE7OCuAvYgLU+AcAhfyTa6SnpChUcEcDERngULwjoTTYRIYgjBuK8+zlstQIpX88xXS/E33XnnT6Y35KW6LjQVry5uByLd69Xst5qhHYAgrGP1c0fvADu9EXdvQGmJoCdOImus84B7POajdR2xPFWs27ob0DihAh4uk6IOBWzhf0phS4AMFwCziYSYY1xbsilFQRQlEPXUUIw3ogel29Z1RyjXWUtzLo3X6xXJI+UkED2CMzaHpGY21t8PKybCh5hACrKm9A3xQFXDMAFAHCfACiphgc/2kPWmrNW1iiAZPxb5mDt04qznNeAsocwjCvjZmd9Ovj/CkgOYBiGGa3QGcwqGpaPGIBPHoYJB7CWiFZQkLvWF5WKNTyK6MorT42WI6lwYp/J0zE5Cd+SfT79hYW1gLQT0r7e3irYrqyGk7L14B4VIx8YgKlQANnWbxzAeuvIcQE4bysrk4Dayic8XH9//9DQ0Eu6vsIqMAm4j/LpHV1f6WKvOnuJ3SAexvxRmBfCzwWnGoEIPlcFd0Ug2gGw1QbANgUFs4vqCVihALpxYNlvzdPi1DAfQi36SZVsSC3qVkKuvR3HSIQ2txded+hsVMYl4Jh8syKughmAo1cUwIFZuq05kXLIHAPu69d378bHxzEbAv/3wl0ZWiRFCg8zL6RrHOI9J//LjTv73JCaYBS+6Jst4XQjycyQ7kjFTYf2He0mouZcN7ZDkxvtc7NeHV5h955UxLMCfTFE6PCXrXwMP2+RQB469HRE5bay0bbpiXEbMCWd0oxOyK3rhHAAD4C8TyjoELrCu3ECnMAS/qI0/u5docBEXIE5IZvoIpy9FBdKwQZLK98JevdFn+iH1MTMyAD4IKWhyTXmdnj6mlps77gnrMmPDVtRASxHSZCp9KA6j+KUodYC/UxZNh2BtR6JxVKu2ZaVFlcvBqr78+LXqXzsAECnM2nhSqwQCExEcMIwow6AONuqAdghZQ504whcAWE7GxrqJ4sf6hOurywMg0mX20/ydZbJ1ES9CwTWGI8QlREzc7NfoETx5Vl/vw6fjkLYld59O3SXJv9g6m4CULDPs+sPALDW1gPxltvsCeY/G0EtxhIriXaSeT2ww0TN1bUVVe+KXnO2SZEAOPp7WiM1kJJvv4AazQ1E/3RFZwtlOHXj715+BeaAt18c2DyLehorPBBNMsnZtRXJWstCOUzfrJj9nf2CFalYj+oJyrz4Ao1xGX4CAD0cP/FphYCYOqCFNxOjXQGg3gbARIcbry1GAnBLzhHB0o4L+66LVtvrNtvgEJPAH8TJ3vDA9awyZ8g3lt3GbVL2WNmhA+D7GZaK81pSTloXU3FfMapBxo6+v2LjTfG2EyknwU3C1gpPxWFJ/vjRmvxl0JSZ/+Ix/F7USFZkdsDz21nwgW8LHhE8TkhEEBtP3xjcCYB7nQG4UU5EMCAVabC8IwCLZsBq89XuK4oN11U9dq1tZSJG2Nk455TzOACes2IET5kynf1M3Iv+RlIoRsAOOkzcNSJQ5xVurBiB+tByANd06C/u80dfEC/vb/5fXyuTbCSI60ON0HHHBMXhDQT146WuADC72AbAgLW/tRixwEVdkVqRb9+BZXh0Qm/M9DXz5rYDvSO7itjkaz3SPg1CXY1vZ+O8LxA4w/SiE8pAsaevrMDdffn1XWac73h07LRwIoArUbgT0aKuKZvMoZCAKAKHghmQQFlWH0wEGYKng6w/wv+QxDNmlrLCr+keAbAWqKt7HRlAuQeTcxvhvPUy+HuyT1bc9vMnE2wqH3tPJgRDZti0AzDGC1JPeGDlE3i3LwtUpIBqu2X+w4gI4NraSicADlHPgHkhCiOQiMDS7Jc2BM72QUNI45dfBBcH1tof/0hA/IojRp7WB1mKvQoFMHetVqNgOrXCABTnxiT0xTZlqPmAa6zjgCzbR5iUP0UoBl+9GxCCssow5zNbi7ng6QmpkAlaJgpj1oC9LEiSdyXCXmac2HnZl6wniWw340jAzgA84CX5tJhmaE31ukzmXV+4DIR4DEg5HePdiV/ockn84ydsr4LH5Wp0qSvigNIRqSKAreB9C3GMvfkFKYBi/CMfLISFG2/5JVwgP9wuzriVj6Cva4oGT39b5jxrSmp8AnvqHZV7GWbQE9GiJ1kMbw7qSz5QAAsdAUic4FvAAruI0QhsrClfOA5mYAiB4JXkYfjbDvsAPEEOIqEQP/3rU2+eLhQjSAEUKQrU1edDU7yVdnJHrNn3e6bkLxYLQAv8KbfvrKmilNuVbOhmmd6sshfA1z4AnbbMceJSZt6h2Psl4TgXa2sHGT5ufHRpmvnMnQGYZU7w75kAVelgfCWMp+xTamFIj+Sxh95nAXxyZOHLUheMSBUkoFSciVmqrL//drZ9mXRYU10uxMCsuDN1Bf72QrYlzm9EEoLSykQFgOwEg43pSXAkv3L2PvmgYI3pc6SAf8ABcM2z1AAekYEdm6tv8e0HOJxjTcnqbakEhamzL2T8AZpDOHshcCwGIPHZyXCs0acF0AqN822Fbfu7G1qlutsGwNx6SJxmQ6Zd3bppaFoPZC90pTgWhaC0OaASEcCl+UNaZPq1PyEPqqy5oznm5ljQBgsPKAWHZCe9/aOjoYSSKjat4PMIDsknmRSlBF3Tb8dLSQg9D7yQiD/0PyT8AYFsL9pkN4zJbwtgNsTQ2g0NTtdCN0n1E5pX1YFVgulfktm9CUrDmjIsJKhumQq+lo9GYBawAKAznEgZRl5zZ/5xP7Ze/8p6g5150fW1MBMQg8Nz52RDMJRSR0p5uXaIk0BgSrSTh2OzETAtgsP3D9SyFk80c9QFQ8rDAdzIhiR0K6G9cl7rP1iy4gnTBABkBxaG+QnpX2LwbQT9kfJe+ybOWmhziRfAPT+Azng2PYQgHl7j2bTAyqgjM2v7bGTasTMOPVkPoQgHzeCgcpICIR0gWKHf15eHGcHjt0ch70RjAUn//P6JATTChJQXwHxwon0+Qtckm7Sxtb6tqnWVuckVX6lVxd+2Lo3I7C6qKmZrahHo1vbrPgCz/j1syIBK7D0KYaJBBlTS+aiyzvRMSGAGNTD3DBb4hhB6iMm4doRWJ0w/n4DBWF/ofKzZsSRmOV4eroVFezJC0Lw7ANxrNzItH5wQra5QCNajZFu1yp5Dob8Ib0OiwvW9IH+tCg8WQ6oj24EQVG5aIsTMvV1J7PcigDiiFxO8Ia4tk4HJM0Bw5SDJxnI0GmNjVAVnXq6E6VQayiaeARG3CkNOONxZgbS+JwcGYBDIGN2aBEzHo9B3ZfFLlJ96Rn6HAPrSGeT+3ESateGpNyYUBsRX8IN2BceW+R96/tqTq7iWHEQ5q7eiUsJKAIO7ePEh5cmdEKm0wmZBH+xvlvfLZTqcrbyPoIBoOmjvAzO5FEUEohBcGWrcitMXQLfW98PzL90iAHFIeUJaEc8nUemeYF4uUMZUa9tpJKVw13VR0iosxP6j8iccXQq9mTnfKUjUcPlGMddoV8G6WzfhA3A9uI0c26YhNMGGepHsC5JsHMAuDTiAbafeIKOIYAO3sDcS4Ynl+P/m0I6b4tTDQ4nwifpQvUHKVG8Lja8HR9m1NvxlS90hAMV9QgDAXM57f7fXPZ6Cr/CJ3Dfl3MB2ZcbuPPJ2AwhJAUIe5OZHCViLNVlUWjGvKB+U5OQ7O9/S+w3ZhtseAP+Rb6B1FCqVDg8IgsQWI9PX6L8KB6uhihEF4Ji7exHZmR1svNJRm1g2CS1iiAcKGQ9X1tpmn9dwfxwiAN93zX7B4NGub2xsbe3dXMOE5F1SmZn3zSP1TvElgTxlx+9eNP7Sp0Vabxpe7bX9UToskA48lwjBa6kQ5GYBfI8ce9oW4Tvf5FW1hUEAuW86/nUlXC9mz2CvpHHX9RhHTyEbigYRgCVhD1UiAjGyWDhsn02JEOV2XorOdYNXTXQNgHqZPEFZtejyj5HOh2Rhb1wNG/KJ0G9xYd5vzl/obPPs7nZOHfArL27juF9sfmt5qp/9ALaCm4WQzQob7UQg0YtHBw0+ga102zjYX2nDxhrZhBN3dvhzYG/sjgoaopQckoqbJxeAAOCFFlFXSuy0fAg3Fd5SZli2qdz1A4uerUjTEyKkXExxdxFpao7FhrK+onslgPkggNwwG28kaHY/oQ5Ko1o8gha4oSM9gmKEWmjWVPLWI2+x/CFz9HgErq3BbiUk2Djx5AIQALw0owOYlwCoK+wtBqC5tPRq6mKqaFhmcOOthIZDBy41/SEi0EljpC9eiRu36nvtSnQiAujbuJOKQCDwDLKqmA+OpBbXolQCsmIuoUeD7Nm6UwqpSbgHgLiTRAEHCQ+edwGAVTv6zhy+YvZcLWRE864DID9U8yLuw5ANX7aVbnhHChg5mRKEoGQ3OjrH62EAkvAcljLd9id+SXx6PMF0WCKVgJusqcktwkYlXOqsqKYN52Q2+erc0wtAAFDIxbVdvhgunUKuCMTMqvY9jxnTNsPQ8u54WV7vGD+hPt+k27lemmGxxWDDsK9xKSfJZ1uSLavr6Id8WnlMy6wxzhSjGBqZHwRSypjt6LCyWrY+4RPTjwYgbhDh3yD2qQA0Im827t8Qge7DIG/34Jk4W3Hg5qllW1PsH7a8Ir79EupT084mmq4QDJqVuZtwg8Mnznele2e/5WMLdh7RNUDBVCKhuRmPYlyYW91c2U8m2yREohKY6Ieg0PhXskHdeXcAeGnidrxpFXm4Ta8Rs6SBwIp6m47tfAcbnxc1p6y0EwI9taaWZw9rVdrN26vHvyJsRMyo9QFYkT5E2HBJDbP+T6zAPeSeu8s95icRCfILUkyd3FnZXL3yKUYsy8INElltyyfJh3Tgf6BHg4PUQQGPLnUHgEuXVQNcVcuybdgdWlg23BbjlA0nkAYCqTiphIXcIgHoRsNri1EJzPlajmxhG+FhW+W35zw1EgQ94xQvQrEDAGmAGOsMCv3ohvBWC3G8gUjYL/2/uB0ZXlg/0YZhMABvWXleQDGSKthVLBPMHKAS7ecr1P1R1sCMsx3a57pBAVMAOyBkNyfp6ZgNm7gRDUBHCXuH+YXht+UvSdWspvt5lrIQNs83HcbHy92LlQMoC2YGzYhBooRLGIvhFe6+xWUUFVrOLz95JCMoRPorGoIm8xAGf/If7A9oBhLeMy9/Sfzidrd1zp+OgZ5bdHQ+zyz1FIDVtESgsGS9dKMOngo2on1+03SH+W1Hwk+S/zCt/xKQga8VdbJm3HsCU2lZqH1PAeAoKuF9Yk0pAHQlHkLoICiISojhwL94WR+CoSsU47/POQR+zX76dP/43xHKP9I6H9yhvcsBjGn+yQFusl46G4PX8kcEULDbEvmbj2F6OJdbv87rqsQy/0J8L+F82/AQXZdpWdH3lvS16Jxyw6z0EtlKhEOYkMhJqnpJbIXyR3Jw8h7dUUIghu/GC6TJ8n78DZF09H7XOCCdALhkyrrG2E5euyGp4KgAOhk5Mg66otioC7K32ze1cognqzFb8Gdb0UvKANR8h493BuA/DfK9f5MvE6FCUMklpY/4FC9LbO/y1bdyMBYIgWcYwLsduqf8I7t0cv5Gl3oNQFsWh2H72OQltFz7gyOdEIhNR9J9ZjYq+XLbkJFpFVECZjsC8D+npXOzssFqBI9rkCEyEA2zjvGj9OHPX/lIj9VBlWdAZeAO2eGrfo+Q9NqkDuoX+COF2oOxpZ4D0JJOw80r90ut8PRY9HNpenMyeqt2vbdBK6ixduB6N68QfeVAUWDaybfkIwK4JAWQuVKyYOafj7krXPraMX4ufZy/A9xKeE6tGKkM3EcnArzYTiOCUCNLqhHp0KPBhaXeA9Dw9wiJLqUkG8cK4NPxDk4mbgWjkbpeLpeVW6Xzp6Ki/HtF4YREApDvl2wrhBIjcLzQn+gIP9cxBj+YSCbKX1htCvF7VssN2lV32AmCvECWTEMFNf+7pR4EcEp6P2vKcRfsL+lmZ6djJjpeWaz926jJEQz2rOTlTggD8LV0rzx7SUngygHwM37bCYHcAyY/DhGtSshoExl+f+zMi4Hy1rOViAhCHYSOMhYE5z42i35+u7TUiwCyOMyudEtqyf5ueaHcpYP1z5bWKX8VFpjZLUcQgDllijAtfZRaYfnEhTne+gvC5ZeoCAqvS/S/JP1LxP+Ya6cY0exENUyFIKluXWtP34peL5GD1Mm75xaWehPAf9UkJhUfrqEeuad1bO5Wp9sjCPnBAGI5sq9Xu0lETiouMBNPk74hH5rQJgSuEMMM1XCnliCo3wxxTFEyRZlR9XaOCsECbS850EOLDLEI7PCoQbsBvsJBNsnImh4FkMVheLkAK2jfVVlafJ9X8x7+1oWFBazZkEiL4Tay7Hp3Ur+GDT6cka/5G/XQOOMxACQbN6yu6NhKNJ582RGCgN/LJJp/X/WV1ahkjBwTMabXedPTkL4irTakTSJH0JlCpF+DDhz8PPh+qWcBtL2jA6Bfaa+SV25ywzNx5qv7nBWpG/TtkkR/xgxaEaq4FSIuh7tr7l1Dsf1u5XprW90dnK7KAax1BuDSKCXiIEmE4FlkBAG/M+J9MMcgqmR6PzhBp/dSBMdJ453uKXxdYx1KQ/VCkmG6s0kPMrK01LsAsnqYPG1WgnYlsaY9MHOKA2jf98SgQgIg1JwqHVqWY502XWmsmLPhNC+FFeloI5EAzM22+xZkBhYaZkTRAYLUv020lX4FOiRhn0qmnyJfmBF6wNUyKGLaage97y8PoOof2nn6cd+lo50z6NFMko3Z4a91ht/V9OhSLwN4GmqV7SlGelgPObnqZZHW6UDZgGEUi5e+SgPl5OmQucFZ1YMhB7DW9jE6n6Ey6eyWIoiKODw//MnBr0A148TbThJjoyPUHV7dPKoTDcsXHcFwKw4BgSeCDVudGJxfWuppAOOhAO4qUsHWNzhnxwDMr9+7gclQAOgfQ7wbQY7PUyDKdWruJxugiT8lFKIP6DtrMDrq5ftpxpG3V2z2UXkH9WxJOgEJVC+nD/H7aanHARxOh7YrbcubMk8f/5SntGjbsEvHNTDfSHsVEcBKFEPi/cxncpt1jiAy2O8rQUgQ+PpfNlibcLKuU8fg7T1E0wiXgqj9AcJbaP8ElVuCBS2g8FMBTMMyf8XEzMj/WFrqdQCXQqMjfhgqndYiRD9jO8oOnG0E4LTSy/8YqSI1EI9hPJTrt0wcQSPwyyF3Fy78CSwzrh9LtwQ/jIvcMy73uwWm+qk23t8Bw69eH4P/HZzt7Ovun1avZkbPl5b+CgA0w9Jhfhp4KvjysU/4lZWQjlKL1kLCLECtqgRwA8ZDbOCEiK0tGBFR06O6UjNMK26e0SEwKOTGqWHWoLMpS6691jhj0unqIX7p6Mzx51XloiORrgYXupi+zgCEaeakeQTcUY0U7NvoHJxazk5sovDgKf+LpW9lACr3ZlAvZ2KcpYxzyoc4RPHl37MoMejEg0YhqVwFtMxWmGx6aFgOGLwKQrjJNO/VTJfT1xmARfRFi8WLeHPY46rSuif9ZmNjfX1xcdtbd/zodT+GYAnsdugEs5PKStMzYVnoaMGknxzfYFXfwWFVAnYkJgLCsL7jaMert4/iF7xfmBkECj9/3nQk3+eJuavjtyOjSz2wHg4IL6LC+dvlMgQIa7uVCt/u3n78wjNx+EG+IzfE2eLQWOoMwP6o0cyf3gpKsbyPZtkYzIduNAbAOAPTzHELVj8fzzxmUuL96MjMzODgIPzn7cxMbGH0fKlHVuwxlKI6a2Z8i1MW6hX0StQ+zpzLn/2qEwCzwpbp7df5/ODxhN8Y29z06seJ48GRniGk+wGMKWd7ZDuoh+4IeTvhOET5vY9REMytO/sSa8WlTgDUSIF1J3YZMHg1ofQNroC+0WfwHhHApVOVCMya36j0O3aqCSPzt9oimHM3q8mmFeLs1OJL6I+GruHqPfyo0ZGRwemriYlNj0c6MXE8PRib/90zdY8M4LClHv73rZY4hEivteslFvYsTLc/p+Fm9aJYjcerMa+71alzMA8YzgxOg2GG/xscGZkfef9M3DcAcKkpJ1A3i9/uxIeLgubP5q/XI+EHz8Twd72+56OjI6Oj/z76bPJ9SwCXhg3ZCErN+KanHj81PXPPpW10H7f3xGL9tPXq+Z7/FQKIOhEnoYLtpNGF1lPzW5/8n0413+z9mw1hNxwoWbz21kinrec7/tcK4BMtwwzsAAGBSFww/ln/viL5ef0NAgjeq5mO2L5kVp/v9zOA30IKRmhjysLYmOe7/QzgN1qX2MaUDcXPvni+2c8AfsOojKFspcNcmlV8vtXPAH7jdXFKWumyAfps4/L5Rj8D+F1U8cWpTSdeswWJXKPYC98xbhSfAezyVbTtCDfpVbMqrGIHlt9/nXrCL2elo8com499WSMnh+L3eUqKFuTUT/9ePpXU7h0AsRfJ/pZ8a+mnuxpNDSo3ItdfmheP+bX1yBPMjHS64yazS5YxnY5JN0dI9w6Al/JRpfe+8JYRC5RjPVmgGhsNrOgDAh7xQQQ+tCnnmoRKOJxirDXv20ExLTt2VusdAB/3wsds3VuXNZ9+SgBP05EPbj7qdahCKd20Mwdc14rhIyJ1bapz/tI2lC71m03pU9c7AJryUbn3dZmhx8/2T2E340/3dGWjKkIUWY/nsNhCi2AxrYcaokbHyXTCHyagoILY/rtgIXNWm+oZAGNpyVTTB3ycH8ClU9uKP+XTZUZ0Baq2ffmIAlAQp9W0HvqIxy27MwlAZkhZtJUs+NCg1Lf/pWcANB63vhVt79Ou+XK4VdmTZAptcYjyqbJd4eFW08Wl5NjIe88AaLsT92NNFhPosLb052Kx6SoHXXva2oSYcE/gbPwm4JTn7C6Vwcy4+LpLClM1qigvetSK1Xkbbdy5BcPVYXqiTc9jpb7IlxpULDd7BsC45swaNMwPNv5X+2B2Ul46j9PeNKt674v9qGsKvoXm6Hwr4Tf/q6b7V2jCwjMfloWvbe2DGx0FRWeBooTvaRqRRZQjeeOwc7nt7ZJpJw9tR7PGzQ9gQZ+SE50S2iWtdsfuFQCFOAWIbhN2+EzAfEJqshSFLIKhOUVXl4ZleAsHYYIe+5CmrcNPZAQhfX3RFKplyA0Xot5VmxbZRrWALuDIPFRnGEIET7OZfLBgGwkYwmBTxv6bCV+pys7i0kGy6m4/2887DIdtoazCIJtROHqzinYt1ujqntJHixYJWz8vSaKPwhT5ZhobtgwDNnO25wlT2FNxCu+2q/RoHwx28uxKFLV+juw06NOqnaaXeMSNslQ9VjY5EXphYVcYcuKxntPAqDbI+FT4fx2D+EXTbT45TesMsTjWJqSd+2CxapnsNMoNA+cr0L1E+qnuA6o1xztLk00EzUv//sPRwpBNUh3GeAbfyRZdXcO7LZnhDJewOHbkV3GbP11L/2qRM9e1OFPW3BIZtp3z+t9c4qRN7FBMC5GaKj+WJORruC4IbJiKIkkj10Qnr0WfpEqvGzkpngiIOe8y+p33m/heIB8vHaMONbDQgl2d5tl5wzl2rHcA1JzbzxqgTANuYxaDS0aCQ0e3KMTvN8KgybK4lU3CUVXQewY+rZ6xGzEmC2xhkzm4mP3MSfk7t+PK7GR2SNrgD07VTeWQ06Hb2KXxKTKnOFUGcc2zLMRyqWW5YAMo05ZhMqFjO8qa7WhhYniKnOkrm95fu4q+rekPBEs2zHBj70Ut2LmAZ8XpBVFddDxaR2+7Gvw0zUrOoVWMd4OjBnblcNz0TCtw7lSs1zTwsEkvUYyIeFRcRsKxXeBlVK4T4EwntoxvN4vwNMaqYgs6DJw2qjEejjBc/uymkWAhieFpinvUXAVpkiZD/G1OvuH1CekR4MDOvULBd0mEO/8mRMzHuFiD48bjDnU0YRiHd8NpVeOn3NIa1sgTh36ByQEkYMAOjiCc7KbM99YunXg030GZN/NQdtNW9UN/P1xni297hV+p6DzW8SV3gLg9RZ+XIg3akCfHsoklSYQ+iACbmRYXWpZ+51ivpEF4oJZcFqKOXpn0qpJ4ErlmsWkmePBeg1q22IRMhFYIxBdtvFXmqVClhZ9f5RorPU1+QTWJwXpJ4LjparQnBV4+xVFyhUSV3e6mE1Hn6Q/4TZZYg/goWc48ZPL+Ka9nANEj+gqyhT2pIojxV5AZysQYiXF5joG4tDVPLoAVmluibY22IUQWLP55YJmeUiXL3UHNcQwpbGQv1fS04E/FLG4g6PgsTCF/mMJGoXHBLqvdQ9Uw6HgMO88aVUJVFjyrwk2heBnstrNvh08dGVCI99ysDntj+kXf55OsZBOlkoU3OkvzIs00kxJwO7T2YZ9LjWyN0nS4O3UAtKmqREXJrDuDAcipmrK5QxF3ILW8W61wZQ0/9FP+yLe0uUKlF6macMim6jQOR4hJ9z0wPLHwwJ9Nx+FB+TrtVUb4AJl/4r+j54UiGi+c5Q5PwbPjrKNqspbEq9AbALqBWqSOxU8sdjOaIALIg49OGXli8TVFw9LEm491qTExATXvDfJkiWYzmBPjqHXnQpmRMrDk5UXwuNkpuRY7v2+nbvIV7dQiORj9IuRJctL+RN7GfRFqHq9pgsPLPC98Vmye1Ihx2ZUuitYaXKpg1n/edExkUWoKGziLcWkONWHJcK6qzUzvrOY6xnjIaToZth8mSVoXxMsy6QOqE53UdKzdWI+YgLojNXSmCYdtPnqBGeZo1+JlIOaGhnEavZ/FOUCx9oOHxuMor9yLXSTZJa4ML00aGilydov8cUd+TtvPKEF5Cc5FVnfiICx+ecm8qBH0nIbdVEBRoCruaGDikE5RhES5W8Tzo793ZtxwH8wV0cPsWDH+0FS5jvesVzaNIrgxaYOHS4ZFbb/kgXoJuYw7iTaDGwanzhNCLMUpi2h/Y2pYdJ2G3R+41or1iAmoM2sZL9qU421azpc2nCgH9Q51HYGz3Ege8sipqLoRUpvdPHrZDHp9Xpnci7UT/MmNsPHnz8Tk1zEU5kYRae1AnIuTqnuvLpkXXMTwXZMhRI4x5cRRfHLXYFA0TScA94qXE7gvNRgY+LDGucdpyYaMCZFNy41zaYmq56H3aOiqJqoVKgzc23NpugrKjWRWOcvEGWyyMlijhyqibR6VEx5LKyFIRfglD2rFNebN2Z6CP4N6Hg6ABr/sRfb5TTplyf55ad529lLSqNwje2lr0ebUQR+AbVU9N7bK8p40YMv1msVCYhdM7WMmwnQnxdnMAo17EuJMWbtwxNHu/Q+qgU/dmFyTPazDTJ62LSTC8xxhF1trMoBinloQyxNcoZVWReaQMx/bjcMSs33KzXte8AiV1YMl+ehD0ZCmG4et4u26cOxCmxiH7HLA5TaqNHEgJEOKjpntKDAQWSYzoywa0obrgzF6ts0i6CWMyV6a0eb0kmfAMC5oyNiY4sc6NZz7YjvxkKLGlDGnakrT3dANPdypEz+uogpFwknGxHBdE9t1/NnuT5f8STQpKmgXZLXLCHVZnESL/UKoEI/zLTc4l3S3tHTRIxX+xQ1TogPEFbxFAomUP/+T0BMAGho33OHrMwnv3lN6X0xHhdiusAJDxPZoEdsBsMqUoCHUApAaLXhPlkedLfJRLHFBr9y0phl/UlbsOIIJ/BB6J6bgs030E2Isikm9HTxp+uKfuQk4xbwJRIoxZLGvEptO45clMZlXDMCqNxbsamDuJYDiwxiALcxKhgS6mMjTrL8PAIj+SpHl9SyvdxXjASvm6KW5r+PI4wt8huJLPl0Vp64vjStSt4dkrXsHQNBb9PZPOY9lzBaTpULqgVaukhtKpmcxj/M/4sQqNkR9gk+kObzkBk9f2TwTwBQOAlCcZtc6zg6VVcYDeRzvVRFNTppkZhkAfq42zd6AROMex6XJ7HEaICTDbizGIgXwFVgVhIoif+gM53R4wPpn113mATtireHHpROuJ+WWB2CSTahIozZg0+LmMZibMhOQHNEukuPyQLrluMunCaeqx9A8AsI2bJo9JRUlcDC9v4dsQO4uCo8VPqDmlKfxwBJwhBwH3W4T747xAf7leQmJNuOvHN+M+tNU1pnFU8ZqMU1DqTZe6ymmrNXF82RTb80m1qbjBlviw0EMP7tYBfadOB4GX4Y9W+BZTaaN0Z0w8eMoDChhCTIXJERXJTdVa/JLEHfcWfI9X7GMj3aq6W76i+tFPKz4TdDx0UgWmxo2aLc1JXGwJk/aaUUmDGOQt+ZB2qxTrW24LPJ9LtMWE9M08Wf1DIAgI5g4KWr8WxXTgoYgX8ipKKapVrJFEe1zs3XdNxyLZ0g1w1fUEcNKjzgRInGXHssJVKOyVsdjmsLMTKc+wvCMimX5LZEEJ/92afLEa4ybgyYpl2DNAihJqOlHPX3yKewpNJxNgfCUqbilw+vsOLcM0Ch0DDsCoFiTy/FnKSNvhZjhBmksmrWD68MUR8xR1jEhbWMJw5DpF4NEMRxzmvuJPSQBQdqxXgT4Bhq/4LpQcWR7rlaMDooBb9Rwb0TaPPVXDKRZ5RZeQcNfp2k7hhJGVOxsltTjESGibiUssvwTHGxYzJ4JzSbEJcgK3RUXrq4qEqE8TcJk9O80hcrqHjH9ZgvnjwRNNx1Hk5VLIjnzvABAw29t9OtcqrnPwohNs3RCWDDNk+zsAwUfBLxbJ2ZNbBmShE8TuVB1+ruKHrWbdW/QJRRiwQeDVUp+9zOqtF6yAauWwe6nU+IH98oSefKO/ita0+KAzAvIiF8G+htcBxmKCIv+7huvlCtO8/JQ23XuFLv5wH4+4qdBYY7n0w0c3WBOO78ank67c+NOp60LOm2J19oaQqvKpel8zbitpZ0njF4Z9omnmhb3T1Dmf0O9yi9EzLBP/ZdZOFYz7ilHtdNu/1rVsk7ZuV3SkzX+jj1//bxfZcom9c7+AT78hI1po9dHc8Q8Zz71sKkGzRHv3k/qyisQSR3vPeH3WZoxLyGx6M1QTfFTYvIe3ctY2J5C9209idQPLJyR6+f+Lc2GebSwt8rMM7T+bM/OGaza2X7zu81obxaXngFceuQO+BFIYdrDvfrF0G6+eB5O1OU3CQM2WVUvV8z6YPXuqDcYBVR8no7V5QEf4qOqu2NjPT1ErRvHEDwD6NO+2aec0LH0PB/wbx5AKBqcer4Q32/9f2zMN2hlIT+nAAAAAElFTkSuQmCC";
+document.querySelectorAll("img[data-logo]").forEach(i=>i.src=LOGO_SRC);document.getElementById("favicon").href=LOGO_SRC;
+/* =================== Utilidades =================== */
+const clamp = (x,a,b) => Math.min(b, Math.max(a, x));
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = (x,d=3) => (x===null || x===undefined || !isFinite(x)) ? "—" : x.toFixed(d);
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function makeNormal(rand){let spare=null;return function(){if(spare!==null){const s=spare;spare=null;return s;}let u,v,s;do{u=rand()*2-1;v=rand()*2-1;s=u*u+v*v;}while(s>=1||s===0);const m=Math.sqrt(-2*Math.log(s)/s);spare=v*m;return u*m;};}
+
+/* =================== Estadística =================== */
+const mean = a => a.reduce((x,y)=>x+y,0)/a.length;
+function variance(a){const m=mean(a);return a.reduce((s,x)=>s+(x-m)**2,0)/(a.length-1);}
+const sd = a => Math.sqrt(variance(a));
+function pearson(a,b){const ma=mean(a),mb=mean(b);let sab=0,sa=0,sb=0;for(let i=0;i<a.length;i++){const da=a[i]-ma,db=b[i]-mb;sab+=da*db;sa+=da*da;sb+=db*db;}return(sa===0||sb===0)?null:sab/Math.sqrt(sa*sb);}
+function ranks(a){const idx=a.map((v,i)=>[v,i]).sort((x,y)=>x[0]-y[0]);const r=new Array(a.length);let i=0;while(i<idx.length){let j=i;while(j+1<idx.length&&idx[j+1][0]===idx[i][0])j++;const avg=(i+j)/2+1;for(let k=i;k<=j;k++)r[idx[k][1]]=avg;i=j+1;}return r;}
+const spearman = (a,b) => pearson(ranks(a), ranks(b));
+function cronbach(cols){const k=cols.length;if(k<2)return null;const n=cols[0].length;const tot=Array.from({length:n},(_,i)=>cols.reduce((s,c)=>s+c[i],0));const vt=variance(tot);if(vt===0)return null;const sv=cols.reduce((s,c)=>s+variance(c),0);return k/(k-1)*(1-sv/vt);}
+function lgamma(x){const g=7,c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];if(x<0.5)return Math.log(Math.PI/Math.abs(Math.sin(Math.PI*x)))-lgamma(1-x);x-=1;let a=c[0];const t=x+g+0.5;for(let i=1;i<9;i++)a+=c[i]/(x+i);return 0.5*Math.log(2*Math.PI)+(x+0.5)*Math.log(t)-t+Math.log(a);}
+function betacf(a,b,x){const FP=1e-300;let qab=a+b,qap=a+1,qam=a-1,c=1,d=1-qab*x/qap;if(Math.abs(d)<FP)d=FP;d=1/d;let h=d;for(let m=1;m<=300;m++){const m2=2*m;let aa=m*(b-m)*x/((qam+m2)*(a+m2));d=1+aa*d;if(Math.abs(d)<FP)d=FP;c=1+aa/c;if(Math.abs(c)<FP)c=FP;d=1/d;h*=d*c;aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));d=1+aa*d;if(Math.abs(d)<FP)d=FP;c=1+aa/c;if(Math.abs(c)<FP)c=FP;d=1/d;const del=d*c;h*=del;if(Math.abs(del-1)<3e-14)break;}return h;}
+function ibeta(x,a,b){if(x<=0)return 0;if(x>=1)return 1;const bt=Math.exp(lgamma(a+b)-lgamma(a)-lgamma(b)+a*Math.log(x)+b*Math.log(1-x));return x<(a+1)/(a+b+2)?bt*betacf(a,b,x)/a:1-bt*betacf(b,a,1-x)/b;}
+function corrP(r,n){if(r===null)return null;if(Math.abs(r)>=1)return 0;const df=n-2;const t=r*Math.sqrt(df/(1-r*r));return ibeta(df/(df+t*t),df/2,0.5);}
+function qnorm(p){const a=[-3.969683028665376e+01,2.209460984245205e+02,-2.759285104469687e+02,1.383577518672690e+02,-3.066479806614716e+01,2.506628277459239e+00],b=[-5.447609879822406e+01,1.615858368580409e+02,-1.556989798598866e+02,6.680131188771972e+01,-1.328068155288572e+01],c=[-7.784894002430293e-03,-3.223964580411365e-01,-2.400758277161838e+00,-2.549732539343734e+00,4.374664141464968e+00,2.938163982698783e+00],d=[7.784695709041462e-03,3.224671290700398e-01,2.445134137142996e+00,3.754408661907416e+00];const pl=0.02425;let q,r;if(p<pl){q=Math.sqrt(-2*Math.log(p));return(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}if(p>1-pl){q=Math.sqrt(-2*Math.log(1-p));return-(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}q=p-0.5;r=q*q;return(((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);}
+function pnorm(x){const z=Math.abs(x)/Math.SQRT2,t=1/(1+0.5*z);const r=t*Math.exp(-z*z-1.26551223+t*(1.00002368+t*(0.37409196+t*(0.09678418+t*(-0.18628806+t*(0.27886807+t*(-1.13520398+t*(1.48851587+t*(-0.82215223+t*0.17087277)))))))));return x>=0?1-r/2:r/2;}
+/* Kolmogorov-Smirnov con corrección de Lilliefors (p de Dallal-Wilkinson, como SPSS/R) */
+function lilliefors(x){
+  const n=x.length; const s=sd(x); if(!(s>0)) return {stat:null,p:null};
+  const m=mean(x), y=[...x].sort((a,b)=>a-b);
+  let D=0; for(let i=0;i<n;i++){const F=pnorm((y[i]-m)/s); D=Math.max(D,(i+1)/n-F,F-i/n);}
+  let Kd=D, nd=n; if(n>100){Kd=D*Math.pow(n/100,0.49); nd=100;}
+  let p=Math.exp(-7.01256*Kd*Kd*(nd+2.78019)+2.99587*Kd*Math.sqrt(nd+2.78019)-0.122119+0.974598/Math.sqrt(nd)+1.67997/nd);
+  if(p>0.1){const KK=(Math.sqrt(n)-0.01+0.85/Math.sqrt(n))*D;
+    if(KK<=0.302)p=1; else if(KK<=0.5)p=2.76773-19.828315*KK+80.709644*KK**2-138.55152*KK**3+81.218052*KK**4;
+    else if(KK<=0.9)p=-4.901232+40.662806*KK-97.490286*KK**2+94.029866*KK**3-32.355711*KK**4;
+    else if(KK<=1.31)p=6.198765-19.558097*KK+23.186922*KK**2-12.234627*KK**3+2.423045*KK**4; else p=0;}
+  return {stat:D, p:clamp(p,0,1)};
+}
+/* Shapiro-Wilk (aproximación de Royston, 1995) */
+function shapiro(x){
+  const n=x.length; if(n<3||n>5000) return {stat:null,p:null};
+  const y=[...x].sort((a,b)=>a-b), m0=mean(y); const ss=y.reduce((s,v)=>s+(v-m0)**2,0); if(ss===0) return {stat:null,p:null};
+  const a=new Array(n).fill(0);
+  if(n===3){a[0]=-Math.SQRT1_2;a[2]=Math.SQRT1_2;}
+  else{
+    const m=Array.from({length:n},(_,i)=>qnorm((i+1-0.375)/(n+0.25))); const mm=m.reduce((s,v)=>s+v*v,0); const u=1/Math.sqrt(n);
+    const an=m[n-1]/Math.sqrt(mm)+0.221157*u-0.147981*u**2-2.071190*u**3+4.434685*u**4-2.706056*u**5;
+    if(n>5){const an1=m[n-2]/Math.sqrt(mm)+0.042981*u-0.293762*u**2-1.752461*u**3+5.682633*u**4-3.582633*u**5;
+      const phi=(mm-2*m[n-1]**2-2*m[n-2]**2)/(1-2*an**2-2*an1**2); for(let i=2;i<n-2;i++)a[i]=m[i]/Math.sqrt(phi);
+      a[n-1]=an;a[0]=-an;a[n-2]=an1;a[1]=-an1;}
+    else{const phi=(mm-2*m[n-1]**2)/(1-2*an**2); for(let i=1;i<n-1;i++)a[i]=m[i]/Math.sqrt(phi); a[n-1]=an;a[0]=-an;}
+  }
+  let num=0; for(let i=0;i<n;i++)num+=a[i]*y[i]; const W=Math.min(1,num*num/ss);
+  let p;
+  if(n===3){p=Math.max(0,6/Math.PI*(Math.asin(Math.sqrt(W))-Math.asin(Math.sqrt(0.75))));}
+  else if(n<=11){const g=-2.273+0.459*n, mu=0.5440-0.39978*n+0.025054*n*n-0.0006714*n**3, sg=Math.exp(1.3822-0.77857*n+0.062767*n*n-0.0020322*n**3);
+    const w=g-Math.log(1-W); p = w<=0 ? 0 : 1-pnorm((-Math.log(w)-mu)/sg);}
+  else{const L=Math.log(n), mu=0.0038915*L**3-0.083751*L*L-0.31082*L-1.5861, sg=Math.exp(0.0030302*L*L-0.082676*L-0.4803);
+    p = W>=1 ? 1 : 1-pnorm((Math.log(1-W)-mu)/sg);}
+  return {stat:W, p:clamp(p,0,1)};
+}
+
+/* =================== Estado =================== */
+const PRESETS = {
+  acuerdo: {
+    2:["En desacuerdo","De acuerdo"], 3:["En desacuerdo","Neutral","De acuerdo"],
+    4:["Muy en desacuerdo","En desacuerdo","De acuerdo","Muy de acuerdo"],
+    5:["Muy en desacuerdo","En desacuerdo","Neutral","De acuerdo","Muy de acuerdo"],
+    6:["Totalmente en desacuerdo","Muy en desacuerdo","En desacuerdo","De acuerdo","Muy de acuerdo","Totalmente de acuerdo"],
+    7:["Totalmente en desacuerdo","Muy en desacuerdo","En desacuerdo","Neutral","De acuerdo","Muy de acuerdo","Totalmente de acuerdo"]
+  },
+  frecuencia: {
+    2:["Nunca","Siempre"], 3:["Nunca","A veces","Siempre"], 4:["Nunca","A veces","Casi siempre","Siempre"],
+    5:["Nunca","Casi nunca","A veces","Casi siempre","Siempre"],
+    6:["Nunca","Muy pocas veces","Algunas veces","Bastantes veces","Casi siempre","Siempre"],
+    7:["Nunca","Casi nunca","Pocas veces","A veces","Muchas veces","Casi siempre","Siempre"]
+  }
+};
+function presetLabels(type,k){ const p = PRESETS[type] && PRESETS[type][k]; return p ? [...p] : Array.from({length:k},(_,i)=>`Opción ${i+1}`); }
+const NIVELES = [["bajo","Bajo"],["medio-bajo","Medio-bajo"],["medio","Medio"],["medio-alto","Medio-alto"],["alto","Alto"]];
+const SHIFT = {"bajo":-0.9,"medio-bajo":-0.45,"medio":0,"medio-alto":0.45,"alto":0.9};
+const PV = {alta:0.3, media:0.45, baja:0.6};
+
+function newDim(name, items=5){ return {name, useInd:false, items, inds:[{name:"Indicador 1",items:3},{name:"Indicador 2",items:2}]}; }
+function defaultState(){
+  return {
+    n:120, seed:2026, k:5, scaleType:"acuerdo", labels:presetLabels("acuerdo",5), cons:"media",
+    levels:["Bajo","Medio","Alto"],
+    vars:[
+      {name:"Liderazgo", code:"LID", nivel:"medio-alto", dims:[newDim("Transformacional",5), newDim("Transaccional",4), newDim("Laissez-faire",3)]},
+      {name:"Desempeño laboral", code:"DES", nivel:"medio-alto", dims:[newDim("Desempeño de tarea",5), newDim("Desempeño contextual",5)]}
+    ],
+    dir:"directa",
+    scale:[{lo:0,hi:0.19,label:"Muy baja"},{lo:0.2,hi:0.39,label:"Baja"},{lo:0.4,hi:0.59,label:"Moderada"},{lo:0.6,hi:0.79,label:"Alta"},{lo:0.8,hi:1,label:"Muy alta"}],
+    level:2, exact:""
+  };
+}
+let S;
+const STORE_KEY = "simulador-tesis-correlacional-v2";
+function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(S)); }catch(e){} }
+function validShape(o){ return o && Array.isArray(o.vars) && o.vars.length===2 && Array.isArray(o.scale) && Array.isArray(o.labels); }
+function load(){ try{ const o=JSON.parse(localStorage.getItem(STORE_KEY)||"null"); if(validShape(o)){S=o;return;} }catch(e){} S=defaultState(); }
+const dimItems = d => d.useInd ? d.inds.reduce((s,i)=>s+(+i.items||0),0) : (+d.items||0);
+const varItems = v => v.dims.reduce((s,d)=>s+dimItems(d),0);
+
+/* =================== Eventos =================== */
+function setPath(obj,path,val){const p=path.split(".");let o=obj;for(let i=0;i<p.length-1;i++)o=o[p[i]];o[p[p.length-1]]=val;}
+function readVal(t){ if(t.type==="checkbox")return t.checked; if(t.type==="number"||t.dataset.num)return t.value===""?"":Number(t.value); return t.value; }
+function resizeArr(arr,n,make){ n=clamp(Math.floor(n)||1,1,60); while(arr.length<n)arr.push(make(arr.length)); arr.length=n; }
+
+document.addEventListener("input", e=>{
+  const t=e.target;
+  if(t.dataset.resizeDims!==undefined || t.dataset.resizeInd!==undefined) return; // se procesa en change
+  if(t.dataset.path && t.dataset.path.split(".").pop()!=="nInd"){
+    setPath(S,t.dataset.path,readVal(t));
+    if(t.dataset.custom && S.scaleType!=="personalizada"){ S.scaleType="personalizada"; const sel=document.querySelector('[data-path="scaleType"]'); if(sel) sel.value="personalizada"; }
+    save();
+  }
+});
+document.addEventListener("change", e=>{
+  const t=e.target;
+  if(t.dataset.resizeDims!==undefined){ const v=S.vars[+t.dataset.resizeDims]; resizeArr(v.dims, clamp(+t.value,1,10), i=>newDim(`Dimensión ${i+1}`,4)); renderVars(); }
+  else if(t.dataset.resizeInd!==undefined){ const [vi,di]=t.dataset.resizeInd.split(".").map(Number); const d=S.vars[vi].dims[di]; resizeArr(d.inds, clamp(+t.value,1,15), i=>({name:`Indicador ${i+1}`,items:2})); renderVars(); }
+  else if(t.dataset.actChange==="k" || t.dataset.actChange==="scaleType"){
+    if(S.scaleType!=="personalizada") S.labels=presetLabels(S.scaleType,S.k);
+    else { const old=S.labels; S.labels=Array.from({length:S.k},(_,i)=>old[i]??`Opción ${i+1}`); }
+    renderGeneral();
+  }
+  else if(t.dataset.rerenderVar!==undefined || t.dataset.rerenderVarChange!==undefined) renderVars();
+  else if(t.dataset.rerenderCorr) renderCorr();
+  save();
+});
+document.addEventListener("click", e=>{
+  const b=e.target.closest("[data-act]"); if(!b) return;
+  switch(b.dataset.act){
+    case "add-scale": S.scale.push({lo:0,hi:0,label:"Nuevo rango"}); renderCorr(); break;
+    case "del-scale": S.scale.splice(+b.dataset.i,1); if(S.level>=S.scale.length) S.level=S.scale.length-1; renderCorr(); break;
+    case "generate": generate(); break;
+    case "export-xlsx": exportXlsx(); break;
+    case "export-config": downloadBlob(new Blob([JSON.stringify(S,null,2)],{type:"application/json"}),"configuracion_simulador.json"); break;
+    case "import-config": document.getElementById("cfg-file").click(); break;
+    case "reset": if(confirmReset()){ S=defaultState(); render(); document.getElementById("sec-results").hidden=true; showErrors([]); } break;
+  }
+  save();
+});
+let resetArmed=false;
+function confirmReset(){const btn=document.querySelector('[data-act="reset"]');if(resetArmed){resetArmed=false;btn.textContent="Restablecer ejemplo";return true;}resetArmed=true;btn.textContent="¿Seguro? Clic otra vez";setTimeout(()=>{resetArmed=false;btn.textContent="Restablecer ejemplo";},3000);return false;}
+document.getElementById("cfg-file").addEventListener("change", e=>{
+  const f=e.target.files[0]; if(!f) return; const r=new FileReader();
+  r.onload=()=>{ try{ const o=JSON.parse(r.result); if(!validShape(o)) throw 0; S=o; save(); render(); showErrors([]); }catch(err){ showErrors(["El archivo no es una configuración válida de este simulador."]); } };
+  r.readAsText(f); e.target.value="";
+});
+
+/* =================== Validación =================== */
+function validate(){
+  const err=[];
+  if(!Number.isInteger(S.n)||S.n<10||S.n>10000) err.push("La cantidad de encuestados debe ser un entero entre 10 y 10 000.");
+  if(!Number.isFinite(S.seed)) err.push("La semilla debe ser un número.");
+  if(S.labels.some(l=>!String(l).trim())) err.push("Completa todas las etiquetas de las opciones de respuesta.");
+  if(S.levels.some(l=>!String(l).trim())) err.push("Completa los nombres de los tres niveles del baremo.");
+  const codes=new Set();
+  S.vars.forEach((v,vi)=>{
+    const tag=`Variable ${vi+1}`;
+    if(!String(v.name).trim()) err.push(`${tag}: escribe el nombre.`);
+    if(!/^[A-Za-z][A-Za-z0-9_]*$/.test(v.code||"")) err.push(`${tag}: el código debe empezar con letra y tener solo letras, números o guion bajo (sin espacios ni tildes).`);
+    else if(codes.has(v.code.toUpperCase())) err.push(`Las dos variables tienen el mismo código «${v.code}».`);
+    else codes.add(v.code.toUpperCase());
+    v.dims.forEach((d,di)=>{
+      if(!String(d.name).trim()) err.push(`${tag}, dimensión ${di+1}: escribe el nombre.`);
+      if(d.useInd){ d.inds.forEach((ind,ii)=>{ if(!Number.isInteger(ind.items)||ind.items<1) err.push(`${tag}, D${di+1}, indicador ${ii+1}: el número de preguntas debe ser un entero ≥ 1.`); if(!String(ind.name).trim()) err.push(`${tag}, D${di+1}, indicador ${ii+1}: escribe el nombre.`); }); }
+      else if(!Number.isInteger(d.items)||d.items<1) err.push(`${tag}, dimensión ${di+1}: el número de preguntas debe ser un entero ≥ 1.`);
+    });
+  });
+  S.scale.forEach((r,i)=>{ if(!(r.lo>=0&&r.hi<=1&&r.lo<r.hi)) err.push(`Escala de correlación, fila ${i+1}: «desde» debe ser menor que «hasta», entre 0 y 1.`); if(!String(r.label).trim()) err.push(`Escala de correlación, fila ${i+1}: escribe la interpretación.`); });
+  if(S.exact!=="" && !(S.exact>0 && S.exact<=0.95)) err.push("El valor exacto de correlación debe estar entre 0,01 y 0,95 (el signo lo da el tipo de correlación).");
+  return err;
+}
+function showErrors(list){ document.getElementById("errors").innerHTML = list.length ? `<div class="errors"><strong>Revisa lo siguiente:</strong><ul>${list.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>` : ""; }
+
+/* =================== Simulación =================== */
+function buildPlan(){
+  return S.vars.map(v=>{ let k=0;
+    return { v, dims: v.dims.map(d=>{ const groups = d.useInd ? d.inds.map(ind=>({ind:ind.name,n:ind.items})) : [{ind:"",n:d.items}];
+      const items=[]; groups.forEach(g=>{ for(let i=0;i<g.n;i++){ k++; items.push({code:`${v.code}${k}`, ind:g.ind, num:k}); } });
+      return {d, items}; }) }; });
+}
+/* Modelo: cada encuestado tiene un nivel general por variable; cada dimensión se aleja poco de ese nivel
+   (máx. ±1 punto aprox.) y cada pregunta toma el valor de su dimensión o se mueve ±1. */
+function simulate(rho, plan, sign){
+  const rand=mulberry32(Math.floor(S.seed)>>>0), norm=makeNormal(rand);
+  const K=S.k, c=(1+K)/2, spr=(K-1)/5, pv=PV[S.cons];
+  const sh=plan.map(p=>SHIFT[p.v.nivel] ?? 0);
+  const people=[];
+  for(let r=0;r<S.n;r++){
+    const z1=norm(), z2=norm();
+    const lat=[z1, sign*rho*z1 + Math.sqrt(1-rho*rho)*z2];
+    people.push(plan.map((p,vi)=>{
+      const vc=c+(lat[vi]+sh[vi])*spr;
+      return p.dims.map(d=>{
+        const dc=vc+clamp(norm()*0.3,-0.7,0.7);
+        const anc=clamp(Math.round(dc),1,K);
+        return d.items.map(()=>{ const u=rand(); const del=u<pv/2?-1:(u<pv?1:0); return clamp(anc+del,1,K); });
+      });
+    }));
+  }
+  return people;
+}
+const totalsOf = (people,vi) => people.map(p=>p[vi].reduce((s,d)=>s+d.reduce((a,b)=>a+b,0),0));
+
+function interpret(r){
+  const a=Math.round(Math.abs(r)*100)/100;
+  const row=S.scale.find(x=>a>=x.lo-1e-9 && a<=x.hi+1e-9) || S.scale.reduce((best,x)=>Math.abs((x.lo+x.hi)/2-a)<Math.abs((best.lo+best.hi)/2-a)?x:best);
+  return `${r>=0?"Positiva":"Negativa"} ${String(row.label).toLowerCase()}`;
+}
+function baremo(nItems){
+  const K=S.k, mn=nItems, mx=nItems*K, R=mx-mn+1;
+  const c1=mn+Math.round(R/3)-1, c2=mn+Math.round(2*R/3)-1;
+  return [{label:S.levels[0],lo:mn,hi:c1},{label:S.levels[1],lo:c1+1,hi:c2},{label:S.levels[2],lo:c2+1,hi:mx}];
+}
+const levelOf = (b,x) => (b.find(r=>x>=r.lo&&x<=r.hi)||b[b.length-1]).label;
+
+let last=null;
+function generate(){
+  const err=validate(); showErrors(err); if(err.length) return;
+  const plan=buildPlan(), sign = S.dir==="inversa" ? -1 : 1;
+  const range=S.scale[S.level];
+  const hiCap=Math.min(range.hi,0.9);
+  let target;
+  if(S.exact!==""){ target=+S.exact; }
+  else { const u=mulberry32((Math.floor(S.seed)+104729)>>>0)(); target = range.lo + (hiCap-range.lo)*(0.3+0.4*u); }
+
+  // Calibración: se busca la correlación latente que produce la Rho observada deseada
+  let lo=0, hi=0.995, best=null;
+  for(let it=0; it<30; it++){
+    const mid=(lo+hi)/2; const people=simulate(mid,plan,sign);
+    const r=Math.abs(spearman(totalsOf(people,0),totalsOf(people,1)) ?? 0);
+    if(!best || Math.abs(r-target)<Math.abs(best.r-target)) best={rho:mid,r,people};
+    if(r<target) lo=mid; else hi=mid;
+    if(Math.abs(r-target)<0.003) break;
+  }
+  last = analyze(plan, best.people, target, range);
+  renderResults();
+}
+
+function analyze(plan, people, target, range){
+  const n=people.length;
+  const V=plan.map((p,vi)=>{
+    const dimCols=p.dims.map((d,di)=>d.items.map((_,ii)=>people.map(pp=>pp[vi][di][ii])));
+    const dimTot=dimCols.map(cols=>people.map((_,r)=>cols.reduce((s,c)=>s+c[r],0)));
+    const tot=people.map((_,r)=>dimTot.reduce((s,d)=>s+d[r],0));
+    const nItems=p.dims.reduce((s,d)=>s+d.items.length,0);
+    return {p, dimCols, dimTot, tot, nItems, bar:baremo(nItems), dimBar:p.dims.map(d=>baremo(d.items.length))};
+  });
+  const ksMain = n>50;
+  const norm = x => ({ks:lilliefors(x), sw:shapiro(x)});
+  const nV = V.map(v=>norm(v.tot));
+  const nD = V.map(v=>v.dimTot.map(norm));
+  const pMain = nV.map(x=> ksMain ? x.ks.p : x.sw.p);
+  const nonNormal = pMain.some(p=>p!==null && p<0.05);
+  const method = nonNormal ? "spearman" : "pearson";
+  const corrPair=(a,b)=>{const rs=spearman(a,b), rp=pearson(a,b); return {rs, ps:corrP(rs,n), rp, pp:corrP(rp,n)};};
+  const general = corrPair(V[0].tot, V[1].tot);
+  const d1 = V[0].dimTot.map(d=>corrPair(d, V[1].tot));
+  const d2 = V[1].dimTot.map(d=>corrPair(d, V[0].tot));
+  return {plan, people, n, V, nV, nD, ksMain, method, general, d1, d2, target, range, k:S.k, labels:[...S.labels], levels:[...S.levels], dir:S.dir, seed:S.seed, cons:S.cons};
+}
+
+/* =================== Informe (compartido por pantalla y Excel) =================== */
+// celda: string | number | {v:number, d:decimales} ; bloque: {title, header, rows, note}
+const num = (v,d=3) => (v===null||v===undefined||!isFinite(v)) ? "—" : {v, d};
+const sig = p => p===null ? "—" : {v:p, d:3};
+function buildReport(L){
+  const B=[]; const [A,Bv]=L.V; const nA=A.p.v.name, nB=Bv.p.v.name;
+  const main = r => L.method==="spearman" ? r.rs : r.rp;
+  const mainP = r => L.method==="spearman" ? r.ps : r.pp;
+  const methodName = L.method==="spearman" ? "Rho de Spearman" : "r de Pearson";
+
+  // Fiabilidad
+  const rel=[];
+  L.V.forEach(v=>{
+    rel.push([`${v.p.v.name} (total)`, v.nItems, num(cronbach(v.dimCols.flat()))]);
+    v.p.dims.forEach((d,di)=>rel.push([`   D${di+1}. ${d.d.name}`, d.items.length, d.items.length<2?"— (1 pregunta)":num(cronbach(v.dimCols[di]))]));
+  });
+  B.push({title:"Tabla 1. Confiabilidad (alfa de Cronbach)", header:["Variable / dimensión","Nº de preguntas","Alfa de Cronbach"], rows:rel});
+
+  // Descriptivos
+  const desc=[];
+  L.V.forEach(v=>{
+    desc.push([`${v.p.v.name} (total)`, L.n, Math.min(...v.tot), Math.max(...v.tot), num(mean(v.tot),2), num(sd(v.tot),2)]);
+    v.p.dims.forEach((d,di)=>desc.push([`   D${di+1}. ${d.d.name}`, L.n, Math.min(...v.dimTot[di]), Math.max(...v.dimTot[di]), num(mean(v.dimTot[di]),2), num(sd(v.dimTot[di]),2)]));
+  });
+  B.push({title:"Tabla 2. Estadísticos descriptivos de los puntajes", header:["Variable / dimensión","N","Mínimo","Máximo","Media","Desv. estándar"], rows:desc});
+
+  // Normalidad
+  const fmtKS = t => t.p===null ? "—" : (t.p>0.2 ? {v:0.2,d:3,star:true} : sig(t.p));
+  const normRows=[];
+  L.V.forEach((v,vi)=>{
+    const x=L.nV[vi]; normRows.push([`${v.p.v.name} (total)`, num(x.ks.stat), L.n, fmtKS(x.ks), num(x.sw.stat), L.n, sig(x.sw.p)]);
+    v.p.dims.forEach((d,di)=>{ const y=L.nD[vi][di]; normRows.push([`   D${di+1}. ${d.d.name}`, num(y.ks.stat), L.n, fmtKS(y.ks), num(y.sw.stat), L.n, sig(y.sw.p)]); });
+  });
+  const pA = L.ksMain ? L.nV[0].ks.p : L.nV[0].sw.p, pB = L.ksMain ? L.nV[1].ks.p : L.nV[1].sw.p;
+  const testName = L.ksMain ? "Kolmogorov-Smirnov (n > 50)" : "Shapiro-Wilk (n ≤ 50)";
+  const dec = p => p===null ? "sin variación" : (p<0.05 ? `p = ${p<0.001?"< 0.001":p.toFixed(3)} < 0.05: no sigue distribución normal` : `p = ${(L.ksMain&&p>0.2)?"0.200*":p.toFixed(3)} ≥ 0.05: sigue distribución normal`);
+  B.push({title:"Tabla 3. Prueba de normalidad", header:["Variable / dimensión","K-S Estadístico","gl","Sig.","S-W Estadístico","gl","Sig."], rows:normRows,
+    note:`Prueba que corresponde: ${testName}. K-S con corrección de significación de Lilliefors; * límite inferior de la significación verdadera. ${nA}: ${dec(pA)}. ${nB}: ${dec(pB)}. Decisión: se usa ${methodName}${L.method==="spearman"?" (prueba no paramétrica)":" (prueba paramétrica)"}.`});
+
+  // Correlación general
+  const g=L.general;
+  B.push({title:`Tabla 4. Correlación entre ${nA} y ${nB} (${methodName})`, header:["Relación","Coeficiente","Sig. (bilateral)","N","Interpretación"],
+    rows:[[`${nA} – ${nB}`, num(main(g)), sig(mainP(g)), L.n, interpret(main(g))]],
+    note:`Correlación pedida: ${L.dir}, nivel «${L.range.label}» (${L.range.lo.toFixed(2)} a ${L.range.hi.toFixed(2)}). ${mainP(g)<0.05?"Como p < 0.05 se rechaza la hipótesis nula: existe relación significativa.":"Como p ≥ 0.05 no se rechaza la hipótesis nula."}`});
+
+  // Hipótesis específicas
+  const spec=[];
+  A.p.dims.forEach((d,di)=>{const r=L.d1[di]; spec.push([`D${di+1}. ${d.d.name} – ${nB}`, num(main(r)), sig(mainP(r)), L.n, interpret(main(r))]);});
+  B.push({title:`Tabla 5. Correlación entre las dimensiones de ${nA} y ${nB} (hipótesis específicas)`, header:["Relación","Coeficiente","Sig. (bilateral)","N","Interpretación"], rows:spec});
+  const spec2=[];
+  Bv.p.dims.forEach((d,di)=>{const r=L.d2[di]; spec2.push([`D${di+1}. ${d.d.name} – ${nA}`, num(main(r)), sig(mainP(r)), L.n, interpret(main(r))]);});
+  B.push({title:`Tabla 6. Correlación entre las dimensiones de ${nB} y ${nA}`, header:["Relación","Coeficiente","Sig. (bilateral)","N","Interpretación"], rows:spec2});
+
+  // Comparación de coeficientes
+  B.push({title:"Tabla 7. Comparación de coeficientes (referencial)", header:["Relación","Rho de Spearman","Sig.","r de Pearson","Sig."],
+    rows:[[`${nA} – ${nB}`, num(g.rs), sig(g.ps), num(g.rp), sig(g.pp)]]});
+
+  // Baremos y niveles
+  let t=8;
+  L.V.forEach(v=>{
+    const items=[{name:`${v.p.v.name} (total)`, bar:v.bar, x:v.tot}, ...v.p.dims.map((d,di)=>({name:`D${di+1}. ${d.d.name}`, bar:v.dimBar[di], x:v.dimTot[di]}))];
+    const rows=[];
+    items.forEach(it=>{ it.bar.forEach((b,bi)=>{ const f=it.x.filter(x=>x>=b.lo&&x<=b.hi).length; rows.push([bi===0?it.name:"", b.label, `${b.lo} – ${b.hi}`, f, num(100*f/L.n,1)]); }); });
+    B.push({title:`Tabla ${t++}. Niveles de ${v.p.v.name} y sus dimensiones`, header:["Variable / dimensión","Nivel","Rango de puntaje","Frecuencia","Porcentaje (%)"], rows});
+  });
+  // Tabla cruzada
+  const cross=[]; const labs=L.levels;
+  labs.forEach(la=>{ const row=[`${nA}: ${la}`]; let tot=0;
+    labs.forEach(lb=>{ const f=L.people.filter((_,r)=>levelOf(A.bar,A.tot[r])===la && levelOf(Bv.bar,Bv.tot[r])===lb).length; tot+=f; row.push(`${f} (${(100*f/L.n).toFixed(1)}%)`); });
+    row.push(`${tot} (${(100*tot/L.n).toFixed(1)}%)`); cross.push(row); });
+  const totRow=["Total"]; labs.forEach(lb=>{ const f=Bv.tot.filter(x=>levelOf(Bv.bar,x)===lb).length; totRow.push(`${f} (${(100*f/L.n).toFixed(1)}%)`); }); totRow.push(`${L.n} (100%)`); cross.push(totRow);
+  B.push({title:`Tabla ${t++}. Tabla cruzada de niveles: ${nA} × ${nB}`, header:["",...labs.map(l=>`${nB}: ${l}`),"Total"], rows:cross});
+  return B;
+}
+
+function dataMatrix(L){
+  const header=["ID"]; L.plan.forEach(p=>p.dims.forEach(d=>d.items.forEach(it=>header.push(it.code))));
+  L.V.forEach(v=>{ v.p.dims.forEach((d,di)=>header.push(`${v.p.v.code}_D${di+1}`)); header.push(`${v.p.v.code}_TOTAL`); });
+  L.V.forEach(v=>header.push(`${v.p.v.code}_NIVEL`));
+  const rows=L.people.map((pp,r)=>{
+    const row=[r+1]; pp.forEach(dims=>dims.forEach(items=>items.forEach(x=>row.push(x))));
+    L.V.forEach(v=>{ v.dimTot.forEach(d=>row.push(d[r])); row.push(v.tot[r]); });
+    L.V.forEach(v=>row.push(levelOf(v.bar,v.tot[r])));
+    return row;
+  });
+  return {header, rows};
+}
+function previewTable(L){
+  const {header,rows}=dataMatrix(L);
+  return `<table><tr>${header.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>${rows.slice(0,8).map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</table>`;
+}
+
+/* =================== Escritor XLSX (sin librerías) =================== */
+const CRC_T=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
+function crc32(u){let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=CRC_T[(c^u[i])&0xFF]^(c>>>8);return(c^0xFFFFFFFF)>>>0;}
+function zipFiles(files){
+  const enc=new TextEncoder(), parts=[], central=[]; let off=0;
+  const d=new Date(), time=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1), date=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate();
+  for(const f of files){
+    const nm=enc.encode(f.name), data=typeof f.data==="string"?enc.encode(f.data):f.data, crc=crc32(data), sz=data.length;
+    const lh=new DataView(new ArrayBuffer(30));
+    lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);lh.setUint16(8,0,true);lh.setUint16(10,time,true);lh.setUint16(12,date,true);
+    lh.setUint32(14,crc,true);lh.setUint32(18,sz,true);lh.setUint32(22,sz,true);lh.setUint16(26,nm.length,true);lh.setUint16(28,0,true);
+    parts.push(new Uint8Array(lh.buffer),nm,data);
+    const ch=new DataView(new ArrayBuffer(46));
+    ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);ch.setUint16(10,0,true);ch.setUint16(12,time,true);ch.setUint16(14,date,true);
+    ch.setUint32(16,crc,true);ch.setUint32(20,sz,true);ch.setUint32(24,sz,true);ch.setUint16(28,nm.length,true);ch.setUint32(42,off,true);
+    central.push(new Uint8Array(ch.buffer),nm);
+    off+=30+nm.length+sz;
+  }
+  const cd=central.reduce((s,a)=>s+a.length,0), e=new DataView(new ArrayBuffer(22));
+  e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cd,true);e.setUint32(16,off,true);
+  return new Blob([...parts,...central,new Uint8Array(e.buffer)],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+}
+const xesc = s => String(s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+function colName(i){let s="";i++;while(i>0){const m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=Math.floor((i-1)/26);}return s;}
+// styles: 0 normal · 1 encabezado · 2 0.000 · 3 0.0 · 4 negrita · 5 0.00 · 6 cursiva gris
+function sheetXml(sh){
+  let x=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`;
+  if(sh.freeze) x+=`<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>`;
+  if(sh.widths) x+=`<cols>${sh.widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join("")}</cols>`;
+  x+=`<sheetData>`;
+  sh.rows.forEach((row,ri)=>{
+    x+=`<row r="${ri+1}">`;
+    row.forEach((c,ci)=>{
+      if(c===null||c===undefined||c==="") return;
+      const ref=colName(ci)+(ri+1);
+      let v=c, s=0;
+      if(typeof c==="object" && !Array.isArray(c)){ v=c.v; s=c.s ?? (c.d===3?2:c.d===1?3:c.d===2?5:0); if(c.star){ v=c.v.toFixed(3)+"*"; s=0; } }
+      if(typeof v==="number" && isFinite(v)) x+=`<c r="${ref}"${s?` s="${s}"`:""}><v>${v}</v></c>`;
+      else x+=`<c r="${ref}" t="inlineStr"${s?` s="${s}"`:""}><is><t xml:space="preserve">${xesc(v)}</t></is></c>`;
+    });
+    x+=`</row>`;
+  });
+  return x+`</sheetData></worksheet>`;
+}
+function buildXlsx(sheets){
+  const files=[];
+  files.push({name:"[Content_Types].xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${sheets.map((_,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("")}</Types>`});
+  files.push({name:"_rels/.rels",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`});
+  files.push({name:"xl/workbook.xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${sheets.map((s,i)=>`<sheet name="${xesc(s.name)}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join("")}</sheets></workbook>`});
+  files.push({name:"xl/_rels/workbook.xml.rels",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sheets.map((_,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join("")}<Relationship Id="rId${sheets.length+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`});
+  files.push({name:"xl/styles.xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="3"><numFmt numFmtId="164" formatCode="0.000"/><numFmt numFmtId="165" formatCode="0.0"/><numFmt numFmtId="166" formatCode="0.00"/></numFmts><fonts count="4"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="12"/><name val="Calibri"/></font><font><i/><sz val="10"/><color rgb="FF666666"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE8EEF5"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="7"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="166" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`});
+  sheets.forEach((s,i)=>files.push({name:`xl/worksheets/sheet${i+1}.xml`,data:sheetXml(s)}));
+  return zipFiles(files);
+}
+function downloadBlob(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);}
+
+function exportXlsx(){
+  if(!last) return; const L=last;
+  // Hoja 1: base de datos
+  const {header,rows}=dataMatrix(L);
+  const s1={name:"Base de datos", freeze:true, widths:header.map(h=>Math.max(6,h.length+2)), rows:[header.map(h=>({v:h,s:1})), ...rows]};
+  // Hoja 2: resultados
+  const r2=[[{v:"Resultados de la simulación",s:4}],[{v:`DATOS SIMULADOS (ficticios) — n = ${L.n}, semilla ${L.seed}. Para práctica del análisis, no para reportar como resultados de investigación.`,s:6}],[]];
+  L.report.forEach(b=>{
+    r2.push([{v:b.title,s:4}]);
+    r2.push(b.header.map(h=>({v:h,s:1})));
+    b.rows.forEach(row=>r2.push(row));
+    if(b.note) r2.push([{v:b.note,s:6}]);
+    r2.push([]);
+  });
+  const s2={name:"Resultados", widths:[52,16,16,14,26,14,12], rows:r2};
+  // Hoja 3: diccionario
+  const r3=[[{v:"Diccionario de variables",s:4}],[],["Código","Variable","Dimensión","Indicador","Nº pregunta"].map(h=>({v:h,s:1}))];
+  L.plan.forEach(p=>p.dims.forEach((d,di)=>d.items.forEach(it=>r3.push([it.code,p.v.name,`D${di+1}. ${d.d.name}`,it.ind||"—",it.num]))));
+  r3.push([]); r3.push([{v:"Opciones de respuesta",s:4}]); r3.push([{v:"Valor",s:1},{v:"Etiqueta",s:1}]);
+  L.labels.forEach((l,i)=>r3.push([i+1,l]));
+  r3.push([]); r3.push([{v:"Puntajes calculados",s:4}]); r3.push(["Código","Descripción","Rango"].map(h=>({v:h,s:1})));
+  L.V.forEach(v=>{
+    v.p.dims.forEach((d,di)=>r3.push([`${v.p.v.code}_D${di+1}`,`Suma de ${d.items[0].code} a ${d.items[d.items.length-1].code} (${d.d.name})`,`${d.items.length} – ${d.items.length*L.k}`]));
+    r3.push([`${v.p.v.code}_TOTAL`,`Suma de todas las preguntas de ${v.p.v.name}`,`${v.nItems} – ${v.nItems*L.k}`]);
+    r3.push([`${v.p.v.code}_NIVEL`,`Nivel según baremo: ${v.bar.map(b=>`${b.label} (${b.lo}–${b.hi})`).join(", ")}`,""]);
+  });
+  const s3={name:"Diccionario", widths:[16,48,34,26,12], rows:r3};
+  const [A,Bv]=L.V;
+  downloadBlob(buildXlsx([s1,s2,s3]), `datos_SIMULADOS_${A.p.v.code}_${Bv.p.v.code}_n${L.n}.xlsx`);
+}
+
+/* =================== Render (asistente didáctico) =================== */
+function help(title, html, open=false){ return `<details class="help"${open?" open":""}><summary>${title}</summary><div class="body">${html}</div></details>`; }
+function navRow(prev, next){
+  return `<div class="navrow">${prev?`<button class="btn-l" data-nav="prev">← Anterior</button>`:"<span></span>"}${next?`<button class="btn-b" data-nav="next">${next} →</button>`:""}</div>`;
+}
+function renderGeneral(){
+  document.getElementById("step-1").innerHTML = `
+    <h2>Paso 1 · Tu encuesta</h2>
+    <p class="intro">Empecemos por lo básico: a cuántas personas encuestarías y cómo se responde cada pregunta.</p>
+    <div class="grid">
+      <label class="f">Cantidad de encuestados<small>Tu muestra (n)</small><input type="number" min="10" max="10000" step="1" data-path="n" value="${esc(S.n)}"></label>
+      <label class="f">Opciones por pregunta<small>Ej.: 5 opciones de Muy en desacuerdo a Muy de acuerdo</small>
+        <select data-path="k" data-num="1" data-act-change="k">${[2,3,4,5,6,7,8,9,10].map(k=>`<option value="${k}" ${S.k===k?"selected":""}>${k} opciones</option>`).join("")}</select>
+      </label>
+      <label class="f">Tipo de escala<small>Cómo se llaman las opciones</small>
+        <select data-path="scaleType" data-act-change="scaleType">
+          <option value="acuerdo" ${S.scaleType==="acuerdo"?"selected":""}>De acuerdo (Muy en desacuerdo … Muy de acuerdo)</option>
+          <option value="frecuencia" ${S.scaleType==="frecuencia"?"selected":""}>De frecuencia (Nunca … Siempre)</option>
+          <option value="personalizada" ${S.scaleType==="personalizada"?"selected":""}>Personalizada</option>
+        </select>
+      </label>
+    </div>
+    <h3 class="sub">Opciones de respuesta <small class="tipline">(puedes editar los nombres)</small></h3>
+    <div class="labels">${S.labels.map((l,i)=>`<label>${i+1} =<input type="text" data-path="labels.${i}" data-custom="1" value="${esc(l)}"></label>`).join("")}</div>
+    ${help("¿Por qué cada opción tiene un número?", `<p>En una escala Likert cada respuesta se convierte en número para poder sumarla. Si alguien marca «De acuerdo» en una escala de 5 opciones, esa pregunta vale 4.</p><p>Sumando las preguntas de una dimensión obtienes el <strong>puntaje de la dimensión</strong>, y sumando todas las dimensiones, el <strong>puntaje total de la variable</strong>.</p>`)}
+    <h3 class="sub">¿Qué tan coherentes son las respuestas de cada persona?</h3>
+    <div class="grid">
+      <label class="f">Coherencia de las respuestas
+        <select data-path="cons">
+          <option value="alta" ${S.cons==="alta"?"selected":""}>Muy coherentes: casi siempre la misma opción</option>
+          <option value="media" ${S.cons==="media"?"selected":""}>Coherentes: a veces varían ±1</option>
+          <option value="baja" ${S.cons==="baja"?"selected":""}>Algo variables: varían ±1 seguido</option>
+        </select>
+      </label>
+      <label class="f">Niveles del baremo<small>Nombres de los 3 niveles</small>
+        <div style="display:flex;gap:6px">${S.levels.map((l,i)=>`<input type="text" aria-label="Nivel ${i+1}" data-path="levels.${i}" value="${esc(l)}">`).join("")}</div>
+      </label>
+      <label class="f">Semilla<small>Mismo número = misma base de datos</small><input type="number" step="1" data-path="seed" value="${esc(S.seed)}"></label>
+    </div>
+    ${help("¿Qué significa «coherencia»?", `<p>Una persona responde parecido a las preguntas que tratan del mismo tema. Si en una dimensión marca 4, lo normal es que marque 4, o a veces 3 o 5, pero no 1.</p><p>Mientras más coherentes sean las respuestas, más alto saldrá el <strong>alfa de Cronbach</strong>, que es la confiabilidad del instrumento.</p>`)}
+    <div class="navrow"><button class="btn-l btn-s" data-act="blank">Empezar desde cero</button><button class="btn-b" data-nav="next">Siguiente: Variable 1 →</button></div>`;
+}
+
+function renderVar(vi){
+  const v=S.vars[vi];
+  const dims=v.dims.map((d,di)=>`
+    <div class="dim">
+      <div class="dim-head"><span class="n">D${di+1}</span><input type="text" aria-label="Nombre de la dimensión ${di+1}" placeholder="Nombre de la dimensión" data-path="vars.${vi}.dims.${di}.name" value="${esc(d.name)}"></div>
+      <div class="dim-opts">
+        ${d.useInd
+          ? `<label class="f">Nº de indicadores<input type="number" min="1" max="15" step="1" data-path="vars.${vi}.dims.${di}.nInd" data-resize-ind="${vi}.${di}" value="${d.inds.length}"></label>`
+          : `<label class="f">Nº de preguntas<input type="number" min="1" max="60" step="1" data-path="vars.${vi}.dims.${di}.items" data-rerender-var-change="${vi}" value="${esc(d.items)}"></label>`}
+        <label class="chk" style="padding-bottom:10px"><input type="checkbox" data-path="vars.${vi}.dims.${di}.useInd" data-rerender-var="${vi}" ${d.useInd?"checked":""}> Esta dimensión tiene indicadores</label>
+      </div>
+      ${d.useInd ? d.inds.map((ind,ii)=>`
+        <div class="ind"><span class="n">I${ii+1}</span>
+          <input type="text" aria-label="Nombre del indicador ${ii+1}" placeholder="Nombre del indicador" data-path="vars.${vi}.dims.${di}.inds.${ii}.name" value="${esc(ind.name)}">
+          <input type="number" aria-label="Preguntas del indicador ${ii+1}" title="Nº de preguntas" min="1" max="30" step="1" data-path="vars.${vi}.dims.${di}.inds.${ii}.items" data-rerender-var-change="${vi}" value="${esc(ind.items)}">
+        </div>`).join("") + `<div class="ind"><span></span><span class="tipline">Indicador</span><span class="tipline">Nº preguntas</span></div>` : ""}
+    </div>`).join("");
+  const other = vi===0 ? "Variable 2" : "la correlación";
+  return `
+    <h2>Paso ${vi+2} · Variable ${vi+1} <span class="counter">${varItems(v)} preguntas · ${v.dims.length} dim.</span></h2>
+    <p class="intro">${vi===0?"Escribe tu primera variable tal como aparece en tu matriz de operacionalización.":"Ahora tu segunda variable. Es la que quieres relacionar con la primera."}</p>
+    <div class="grid">
+      <label class="f" style="grid-column:1/-1">Nombre de la variable<input type="text" data-path="vars.${vi}.name" value="${esc(v.name)}"></label>
+      <label class="f">Código de preguntas<small>Se numeran ${esc(v.code||"COD")}1, ${esc(v.code||"COD")}2…</small><input type="text" maxlength="10" data-path="vars.${vi}.code" value="${esc(v.code)}"></label>
+      <label class="f">Nivel predominante<small>¿Hacia dónde tienden las respuestas?</small>
+        <select data-path="vars.${vi}.nivel">${NIVELES.map(([k,t])=>`<option value="${k}" ${v.nivel===k?"selected":""}>${t}</option>`).join("")}</select>
+      </label>
+      <label class="f">Número de dimensiones<small>Al cambiarlo se abren más espacios</small><input type="number" min="1" max="10" step="1" data-resize-dims="${vi}" value="${v.dims.length}"></label>
+    </div>
+    ${vi===0 ? help("Dimensión, indicador y pregunta: ¿cuál es la diferencia?", `<p><strong>Variable</strong> → lo que mides (ej. Liderazgo).<br><strong>Dimensión</strong> → cada parte de la variable según tu teoría (ej. Liderazgo transformacional).<br><strong>Indicador</strong> → algo concreto dentro de la dimensión (ej. Motivación inspiradora).<br><strong>Pregunta (ítem)</strong> → lo que responde el encuestado.</p><p>Si tu matriz no tiene indicadores, deja la casilla sin marcar y solo indica cuántas preguntas tiene cada dimensión.</p>`) : ""}
+    ${dims}
+    ${help("¿Qué es el «nivel predominante»?", `<p>Indica hacia dónde suelen ir las respuestas. «Medio-alto» significa que la mayoría marcaría «De acuerdo» o «Neutral». Sirve para practicar escenarios distintos, por ejemplo una variable con nivel bajo y otra con nivel alto.</p>`)}
+    ${navRow(true, vi===0?"Siguiente: Variable 2":"Siguiente: correlación")}`;
+}
+function renderVars(){ document.getElementById("step-2").innerHTML=renderVar(0); document.getElementById("step-3").innerHTML=renderVar(1); }
+
+function renderCorr(){
+  const r=S.scale[S.level]||S.scale[0];
+  const mid = S.exact!=="" ? +S.exact : ((+r.lo)+Math.min(+r.hi,0.9))/2;
+  const pos = S.dir==="inversa" ? (1-mid)/2 : (1+mid)/2;
+  const [n1,n2]=[S.vars[0].name||"Variable 1", S.vars[1].name||"Variable 2"];
+  document.getElementById("step-4").innerHTML = `
+    <h2>Paso 4 · Correlación</h2>
+    <p class="intro">¿Cómo quieres que se relacionen <strong>${esc(n1)}</strong> y <strong>${esc(n2)}</strong>? El simulador ajusta los datos para que la correlación caiga en el nivel que elijas.</p>
+    <div class="grid">
+      <label class="f">Tipo de correlación
+        <select data-path="dir" data-rerender-corr="1">
+          <option value="directa" ${S.dir==="directa"?"selected":""}>Directa (+): si una sube, la otra sube</option>
+          <option value="inversa" ${S.dir==="inversa"?"selected":""}>Inversa (−): si una sube, la otra baja</option>
+        </select>
+      </label>
+      <label class="f">Nivel de correlación
+        <select data-path="level" data-num="1" data-rerender-corr="1">${S.scale.map((x,i)=>`<option value="${i}" ${S.level===i?"selected":""}>${esc(x.label)} (${fmt(+x.lo,2)} a ${fmt(+x.hi,2)})</option>`).join("")}</select>
+      </label>
+      <label class="f">Valor exacto (opcional)<small>Déjalo vacío para que se elija dentro del nivel</small><input type="number" min="0" max="0.95" step="0.01" placeholder="ej. 0.62" data-path="exact" data-rerender-corr="1" value="${esc(S.exact)}"></label>
+    </div>
+    <div class="visual">
+      <div style="flex:1;min-width:240px">
+        <div class="meter"><i style="left:calc(${(pos*100).toFixed(1)}% - 3px)"></i></div>
+        <div class="meter-l"><span>−1 inversa perfecta</span><span>0 sin relación</span><span>+1 directa perfecta</span></div>
+      </div>
+    </div>
+    <p class="tipline">En la barra se ve aproximadamente dónde caerá tu correlación: ${S.dir==="inversa"?"negativa":"positiva"} y de nivel «${esc(r.label)}».</p>
+    ${help("¿Cómo se lee un coeficiente de correlación?", `<p>Va de <strong>−1 a +1</strong>. El <strong>signo</strong> indica la dirección: + es directa y − es inversa. El <strong>número</strong> indica la fuerza: cerca de 0 casi no hay relación, cerca de 1 la relación es muy fuerte.</p><p>Ejemplo: Rho = 0,65 → «correlación positiva alta». Rho = −0,30 → «correlación negativa baja».</p>`)}
+    <h3 class="sub">Escala para interpretar la correlación</h3>
+    <p class="tipline" style="margin-bottom:8px">Es la escala más usada en tesis (Hernández Sampieri et al.). Si tu universidad usa otra, cámbiala aquí.</p>
+    <div class="scroll"><table class="scale">
+      <tr><th>Desde</th><th>Hasta</th><th class="l">Interpretación</th><th></th></tr>
+      ${S.scale.map((x,i)=>`<tr>
+        <td><input type="number" step="0.01" min="0" max="1" data-path="scale.${i}.lo" data-rerender-corr="1" value="${esc(x.lo)}"></td>
+        <td><input type="number" step="0.01" min="0" max="1" data-path="scale.${i}.hi" data-rerender-corr="1" value="${esc(x.hi)}"></td>
+        <td class="l"><input class="lab" type="text" data-path="scale.${i}.label" data-rerender-corr="1" value="${esc(x.label)}"></td>
+        <td><button class="btn-r btn-s" data-act="del-scale" data-i="${i}" ${S.scale.length<=2?"disabled":""}>Quitar</button></td></tr>`).join("")}
+    </table></div>
+    <div style="margin-top:8px"><button class="btn-l btn-s" data-act="add-scale">+ Agregar rango</button></div>`;
+}
+function render(){ renderGeneral(); renderVars(); renderCorr(); renderStepper(); }
+
+/* =================== Navegación del asistente =================== */
+const STEPS=["Encuesta","Variable 1","Variable 2","Correlación","Resultados"];
+let cur=1;
+function renderStepper(){
+  document.getElementById("stepper").innerHTML = STEPS.map((s,i)=>`<button data-goto="${i+1}" class="${i+1===cur?"active":""} ${i+1<cur?"done":""}" ${i===4&&!last?"disabled":""}><span class="b">${i+1<cur?"✓":i+1}</span>${s}</button>`).join("");
+  document.getElementById("progress").style.width = `${(cur-1)/(STEPS.length-1)*100}%`;
+}
+function goStep(n, scroll=true){
+  cur=clamp(n,1,5); if(cur===5 && !last) cur=4;
+  document.querySelectorAll(".step").forEach(s=>s.classList.toggle("show", +s.dataset.step===cur));
+  renderStepper();
+  if(scroll) document.getElementById("wizard").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function blankState(){
+  const b=defaultState();
+  b.vars=[{name:"Variable 1",code:"VA",nivel:"medio",dims:[newDim("Dimensión 1",4),newDim("Dimensión 2",4)]},{name:"Variable 2",code:"VB",nivel:"medio",dims:[newDim("Dimensión 1",4),newDim("Dimensión 2",4)]}];
+  return b;
+}
+document.addEventListener("click", e=>{
+  const t=e.target.closest("[data-nav],[data-goto],[data-act]"); if(!t) return;
+  if(t.dataset.nav==="next") goStep(cur+1);
+  else if(t.dataset.nav==="prev") goStep(cur-1);
+  else if(t.dataset.goto) goStep(+t.dataset.goto);
+  else if(t.dataset.act==="start"){ e.preventDefault(); goStep(1); }
+  else if(t.dataset.act==="load-example"){ e.preventDefault(); S=defaultState(); save(); last=null; render(); goStep(1); }
+  else if(t.dataset.act==="blank"){ S=blankState(); save(); last=null; render(); goStep(1,false); }
+});
+// La barra de correlación se actualiza al escribir
+document.addEventListener("change", e=>{ if(e.target.closest("#step-4") && !e.target.dataset.rerenderCorr) renderCorr(); });
+
+/* =================== Resultados didácticos =================== */
+const cellText = c => (c && typeof c==="object") ? c.v.toFixed(c.d)+(c.star?"*":"") : String(c);
+const pTxt = p => p===null ? "—" : (p<0.001 ? "< 0,001" : p.toFixed(3).replace(".",","));
+const pEq = p => p!==null&&p<0.001 ? "p < 0,001" : `p = ${pTxt(p)}`;
+const nTxt = (x,d=3) => (x===null||!isFinite(x)) ? "—" : x.toFixed(d).replace(".",",");
+function alphaWord(a){ if(a===null) return "—"; return a>=0.9?"excelente":a>=0.8?"buena":a>=0.7?"aceptable":a>=0.6?"cuestionable":"baja"; }
+const TABLE_HELP = {
+  1:"Mide si las preguntas de cada variable y dimensión son consistentes entre sí. Desde 0,70 es aceptable, desde 0,80 bueno y desde 0,90 excelente. Esta tabla suele ir en el capítulo de metodología, en la parte de confiabilidad del instrumento.",
+  2:"Resume los puntajes: el mínimo y el máximo obtenidos, el promedio (media) y qué tan dispersas están las respuestas (desviación estándar).",
+  3:"Se mira la columna «Sig.» de la prueba que corresponde según tu muestra: K-S si n > 50 y S-W si n ≤ 50. Si Sig. < 0,05 los datos NO son normales. Si en al menos una variable no lo son, se usa Spearman.",
+  4:"Es la tabla de tu hipótesis general. Mira el coeficiente (fuerza y dirección) y la Sig.: si es menor que 0,05, la relación es significativa y se rechaza la hipótesis nula.",
+  5:"Son tus hipótesis específicas: cada dimensión de la Variable 1 con la Variable 2 completa. Se interpreta igual que la tabla de la hipótesis general.",
+  6:"Lo mismo, pero al revés: cada dimensión de la Variable 2 con la Variable 1. Úsala solo si tus hipótesis específicas están planteadas así.",
+  7:"Compara los dos coeficientes. Solo reportas el que corresponde según la prueba de normalidad; el otro queda como referencia.",
+  niveles:"Es la parte descriptiva: cuántas personas quedaron en cada nivel según el baremo. Se suele presentar con un gráfico de barras e interpretar el nivel que predomina.",
+  cruzada:"Cruza los niveles de ambas variables. Si la relación es directa, la mayoría se concentra en la diagonal (Bajo-Bajo, Medio-Medio, Alto-Alto)."
+};
+function tableHelp(title){
+  const m=title.match(/^Tabla (\d+)/); const n=m?+m[1]:0;
+  if(/Niveles de/.test(title)) return TABLE_HELP.niveles;
+  if(/cruzada/.test(title)) return TABLE_HELP.cruzada;
+  return TABLE_HELP[n]||"";
+}
+function renderResults(){
+  const L=last, el=document.getElementById("step-5");
+  const rep=buildReport(L); L.report=rep;
+  const [A,B]=L.V, nA=A.p.v.name, nB=B.p.v.name;
+  const sp=L.method==="spearman";
+  const coef = sp ? L.general.rs : L.general.rp, pval = sp ? L.general.ps : L.general.pp;
+  const inRange = Math.abs(L.general.rs) >= L.range.lo-0.005 && Math.abs(L.general.rs) <= L.range.hi+0.005;
+  const pN = L.V.map((_,i)=> L.ksMain ? L.nV[i].ks.p : L.nV[i].sw.p);
+  const aA=cronbach(A.dimCols.flat()), aB=cronbach(B.dimCols.flat());
+  const pred = v => { const c=v.bar.map(b=>({l:b.label,f:v.tot.filter(x=>x>=b.lo&&x<=b.hi).length})); return c.reduce((m,x)=>x.f>m.f?x:m); };
+  const pa=pred(A), pb=pred(B);
+  const pos=(1+coef)/2;
+  el.innerHTML = `
+    <h2>Paso 5 · Tus resultados</h2>
+    <p class="intro">Muestra de práctica con ${L.n} encuestados. Lee cada tarjeta y luego revisa las tablas: todas incluyen cómo interpretarlas.</p>
+    ${inRange ? `<div class="ok">✓ La correlación quedó dentro del nivel que pediste: «${esc(L.range.label)}», ${L.dir}.</div>`
+              : `<div class="errors">La correlación obtenida (${nTxt(L.general.rs)}) quedó fuera del nivel pedido. Con muestras pequeñas o pocas preguntas es difícil llegar a correlaciones muy altas. Prueba otra semilla, agrega preguntas o elige un nivel menor.</div>`}
+    <div class="cards">
+      <div class="rc"><div class="k">Correlación (${sp?"Rho de Spearman":"r de Pearson"})</div><div class="v">${nTxt(coef)}</div><p class="t">${esc(interpret(coef))} · p ${pval<0.001?"":"= "}${pTxt(pval)}</p></div>
+      <div class="rc y"><div class="k">Normalidad (${L.ksMain?"Kolmogorov-Smirnov":"Shapiro-Wilk"})</div><div class="v" style="font-size:20px">${pN.map(p=>p!==null&&p<0.05?"No normal":"Normal").join(" · ")}</div><p class="t">${esc(nA)}: p = ${pTxt(pN[0]&&L.ksMain&&pN[0]>0.2?0.2:pN[0])}${L.ksMain&&pN[0]>0.2?"*":""} · ${esc(nB)}: p = ${pTxt(pN[1]&&L.ksMain&&pN[1]>0.2?0.2:pN[1])}${L.ksMain&&pN[1]>0.2?"*":""}</p></div>
+      <div class="rc g"><div class="k">Confiabilidad (alfa de Cronbach)</div><div class="v" style="font-size:22px">${nTxt(aA)} · ${nTxt(aB)}</div><p class="t">${esc(nA)}: ${alphaWord(aA)} · ${esc(nB)}: ${alphaWord(aB)}</p></div>
+      <div class="rc r"><div class="k">Nivel predominante</div><div class="v" style="font-size:20px">${esc(pa.l)} · ${esc(pb.l)}</div><p class="t">${esc(nA)}: ${(100*pa.f/L.n).toFixed(1)}% · ${esc(nB)}: ${(100*pb.f/L.n).toFixed(1)}%</p></div>
+    </div>
+    <div class="visual"><div style="flex:1;min-width:240px"><div class="meter"><i style="left:calc(${(pos*100).toFixed(1)}% - 3px)"></i></div><div class="meter-l"><span>−1</span><span>0</span><span>+1</span></div></div></div>
+    <div class="explain">
+      <h3>¿Qué significa esto? (en palabras sencillas)</h3>
+      <p><strong>1. Normalidad:</strong> como hay ${L.n} encuestados ${L.ksMain?"(más de 50), se usa Kolmogorov-Smirnov":"(50 o menos), se usa Shapiro-Wilk"}. ${pN.some(p=>p!==null&&p<0.05)?`Al menos una variable tiene p < 0,05, es decir, no sigue una distribución normal. Por eso se usa la <strong>Rho de Spearman</strong>, una prueba no paramétrica.`:`Las dos variables tienen p ≥ 0,05, es decir, siguen una distribución normal. Por eso se usa la <strong>r de Pearson</strong>, una prueba paramétrica.`}</p>
+      <p><strong>2. Correlación:</strong> el coeficiente es ${nTxt(coef)}, una correlación <strong>${esc(interpret(coef).toLowerCase())}</strong>. ${coef>=0?`Cuando ${esc(nA)} aumenta, ${esc(nB)} también tiende a aumentar.`:`Cuando ${esc(nA)} aumenta, ${esc(nB)} tiende a disminuir.`}</p>
+      <p><strong>3. Hipótesis:</strong> ${pval<0.05?`como ${pEq(pval)} es menor que 0,05, se <strong>rechaza la hipótesis nula</strong> y se acepta la alterna: existe una relación significativa entre ${esc(nA)} y ${esc(nB)}.`:`como ${pEq(pval)} es mayor o igual que 0,05, <strong>no se rechaza la hipótesis nula</strong>: no hay evidencia suficiente de relación.`}</p>
+      <p><strong>Así se redactaría:</strong> «Se obtuvo un coeficiente ${sp?"Rho de Spearman":"r de Pearson"} de ${nTxt(coef)} con una significancia ${pval<0.001?"menor que 0,001":"de "+pTxt(pval)}, lo que indica una correlación ${esc(interpret(coef).toLowerCase())} ${pval<0.05?"y significativa ":""}entre ${esc(nA)} y ${esc(nB)}.»</p>
+    </div>
+    <div class="dl"><p><strong style="color:#fff">Descarga tu Excel de práctica.</strong> Incluye 3 hojas: Base de datos (lista para SPSS, Jamovi o R), Resultados (todas las tablas) y Diccionario (qué pregunta pertenece a cada dimensión e indicador).</p><button class="btn-y" data-act="export-xlsx">Descargar Excel ↓</button></div>
+    ${rep.map(b=>`<div class="tbl"><h3>${esc(b.title)}</h3><div class="scroll"><table><tr>${b.header.map((h,i)=>`<th class="${i===0?"l":""}">${esc(h)}</th>`).join("")}</tr>
+      ${b.rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${i===0?"l":""}">${esc(cellText(c))}</td>`).join("")}</tr>`).join("")}</table></div>
+      ${b.note?`<p class="note">${esc(b.note)}</p>`:""}
+      ${tableHelp(b.title)?help("Cómo leer esta tabla", `<p>${esc(tableHelp(b.title))}</p>`):""}</div>`).join("")}
+    <div class="tbl"><h3>Vista previa de la base de datos (primeras 8 filas)</h3><div class="scroll">${previewTable(L)}</div>
+      ${help("¿Qué columnas tiene la base?", `<p>Cada fila es un encuestado. Primero vienen las preguntas (${esc(A.p.v.code)}1, ${esc(A.p.v.code)}2…), luego los puntajes de cada dimensión (_D1, _D2…), el total de cada variable (_TOTAL) y el nivel según el baremo (_NIVEL).</p>`)}</div>
+    <div class="navrow"><button class="btn-l" data-nav="prev">← Ajustar la correlación</button><button class="btn-b" data-goto="1">Probar otro modelo</button></div>`;
+  goStep(5);
+}
+
+/* =================== Contacto (envío al correo de investiGO) =================== */
+const CONTACT_EMAIL = "investigo.tesis@gmail.com";
+function modelSummary(){
+  return S.vars.map((v,i)=>`Variable ${i+1}: ${v.name} (${varItems(v)} preguntas) — ` + v.dims.map((d,di)=>`D${di+1} ${d.name}${d.useInd?` [${d.inds.map(x=>x.name).join(", ")}]`:""}`).join("; ")).join(" | ")
+    + ` | Muestra: ${S.n} | Escala: ${S.k} opciones | Correlación: ${S.dir}, ${(S.scale[S.level]||{}).label||""}`;
+}
+document.getElementById("contact-form").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const f=e.target, msg=document.getElementById("contact-msg"), btn=document.getElementById("contact-btn");
+  const data=Object.fromEntries(new FormData(f).entries());
+  msg.className="formmsg";
+  const bad=[];
+  if(!String(data.nombre||"").trim()) bad.push("tu nombre");
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.correo||"")) bad.push("un correo válido");
+  if(!data.acepto) bad.push("aceptar el uso de tus datos para contactarte");
+  if(bad.length){ msg.className="formmsg err"; msg.textContent="Falta: "+bad.join(", ")+"."; return; }
+  if(data._honey) return;
+  const payload={
+    _subject:`Nuevo contacto desde el simulador investiGO: ${data.nombre}`, _template:"table", _captcha:"false",
+    Nombre:data.nombre, Correo:data.correo, _replyto:data.correo, Celular:data.celular||"—", Universidad:data.universidad||"—",
+    Carrera:data.carrera||"—", Etapa:data.etapa||"—", Mensaje:data.mensaje||"—"
+  };
+  if(data.incluir) payload["Modelo del simulador"]=modelSummary();
+  btn.disabled=true; btn.textContent="Enviando…";
+  try{
+    const res=await fetch(`https://formsubmit.co/ajax/${CONTACT_EMAIL}`,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(payload)});
+    const j=await res.json().catch(()=>({}));
+    if(!res.ok || String(j.success)==="false") throw new Error(j.message||"error");
+    msg.className="formmsg ok"; msg.textContent="¡Listo! Recibimos tus datos. El equipo de investiGO te contactará pronto.";
+    f.reset();
+  }catch(err){
+    const body=Object.entries(payload).filter(([k])=>!k.startsWith("_")).map(([k,v])=>`${k}: ${v}`).join("\n");
+    msg.className="formmsg err";
+    msg.innerHTML=`No se pudo enviar (¿estás sin internet?). Puedes intentarlo de nuevo o <a href="mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Contacto desde el simulador investiGO")}&body=${encodeURIComponent(body)}">enviarlo desde tu correo</a>.`;
+  }finally{ btn.disabled=false; btn.textContent="Enviar mis datos"; }
+});
+
+/* =================== Inicio =================== */
+load(); render(); goStep(1,false);
+
+/* =================== Modo claro / oscuro =================== */
+function applyTheme(th){
+  document.documentElement.setAttribute("data-theme", th);
+  const b=document.getElementById("theme-btn");
+  b.textContent = th==="dark" ? "☀️" : "🌙";
+  b.setAttribute("aria-label", th==="dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro");
+}
+applyTheme(document.documentElement.getAttribute("data-theme")||"dark");
+document.getElementById("theme-btn").addEventListener("click", ()=>{
+  const th = document.documentElement.getAttribute("data-theme")==="dark" ? "light" : "dark";
+  applyTheme(th); try{ localStorage.setItem("investigo-tema", th); }catch(e){}
+});
+
+</script>
+</body>
+</html>
